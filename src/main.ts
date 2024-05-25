@@ -7,6 +7,7 @@ import { wait } from './wait'
  */
 export async function run(): Promise<void> {
   try {
+    console.log('Hello World')
     const ms: string = core.getInput('milliseconds')
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true

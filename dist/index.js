@@ -24958,6 +24958,7 @@ const wait_1 = __nccwpck_require__(5259);
  */
 async function run() {
     try {
+        console.log('Hello World');
         const ms = core.getInput('milliseconds');
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Waiting ${ms} milliseconds ...`);
