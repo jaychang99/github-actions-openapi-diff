@@ -63,6 +63,13 @@ jobs:
         with:
           milliseconds: 2000
 
+      # echo outputs from test-action's stdout
+      - name: Set Output
+        id: set-output
+        run:
+          echo "::set-output name=time::$(cat ${{
+          steps.test-action.outputs.stdout }})"
+
       - name: Post comment on PR
         uses: peter-evans/create-or-update-comment@v4
         with:
