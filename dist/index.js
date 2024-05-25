@@ -24958,7 +24958,6 @@ const wait_1 = __nccwpck_require__(5259);
  */
 async function run() {
     try {
-        console.log('Hello World');
         const ms = core.getInput('milliseconds');
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Waiting ${ms} milliseconds ...`);
@@ -24968,6 +24967,22 @@ async function run() {
         core.debug(new Date().toTimeString());
         // Set outputs for other workflow steps to use
         core.setOutput('time', new Date().toTimeString());
+        console.log(`
+    This is a multi-line string
+    
+    # API Differences
+
+    ## ADDED
+    ---
+
+
+    ## MODIFIED
+    ---
+
+
+    ## DELETED
+    ---
+    `);
     }
     catch (error) {
         // Fail the workflow run if an error occurs

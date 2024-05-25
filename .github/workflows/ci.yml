@@ -73,7 +73,7 @@ jobs:
             - With GitHub **Markdown** :sparkles:
             - Created by [create-or-update-comment][1]
             - and testing openapi diff 
-
+            ${{ steps.test-action.outputs.stdout }} 
             [1]: https://github.com/peter-evans/create-or-update-comment
           reactions: '+1'
 
