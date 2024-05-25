@@ -18,6 +18,8 @@ inputs:
 outputs:
   time:
     description: 'Your output description here'
+  result:
+    description: 'The result of the Typescript test'
 
 runs:
   using: node20
