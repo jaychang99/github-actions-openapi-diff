@@ -66,9 +66,7 @@ jobs:
       # echo outputs from test-action's stdout
       - name: Echo Output
         id: echo-output
-        run:
-          echo "::set-output name=time::$(cat ${{
-          steps.test-action.outputs.result }})"
+        run: echo "${{ steps.test-action.outputs.result }})"
 
       - name: Post comment on PR
         uses: peter-evans/create-or-update-comment@v4
