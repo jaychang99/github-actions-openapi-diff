@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
+import { stdout } from 'process'
+import * as fs from 'fs'
 
 /**
  * The main function for the action.
@@ -20,7 +22,11 @@ export async function run(): Promise<void> {
     // Set outputs for other workflow steps to use
     core.setOutput('time', new Date().toTimeString())
 
-    console.log(`
+    // print to stdout
+
+    stdout.write('This is a single-line string\n')
+
+    const result = `
     This is a multi-line string
     
     # API Differences
@@ -35,7 +41,11 @@ export async function run(): Promise<void> {
 
     ## DELETED
     ---
-    `)
+    `
+
+    console.log(result)
+
+    fs.writeFileSync(process.env.GITHUB_OUTPUT!, `${'test-action'}=${result}`)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)

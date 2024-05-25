@@ -24952,6 +24952,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const wait_1 = __nccwpck_require__(5259);
+const process_1 = __nccwpck_require__(7282);
+const fs = __importStar(__nccwpck_require__(7147));
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -24967,7 +24969,9 @@ async function run() {
         core.debug(new Date().toTimeString());
         // Set outputs for other workflow steps to use
         core.setOutput('time', new Date().toTimeString());
-        console.log(`
+        // print to stdout
+        process_1.stdout.write('This is a single-line string\n');
+        const result = `
     This is a multi-line string
     
     # API Differences
@@ -24982,7 +24986,9 @@ async function run() {
 
     ## DELETED
     ---
-    `);
+    `;
+        console.log(result);
+        fs.writeFileSync(process.env.GITHUB_OUTPUT, `${'test-action'}=${result}`);
     }
     catch (error) {
         // Fail the workflow run if an error occurs
@@ -25161,6 +25167,14 @@ module.exports = require("path");
 
 "use strict";
 module.exports = require("perf_hooks");
+
+/***/ }),
+
+/***/ 7282:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("process");
 
 /***/ }),
 
