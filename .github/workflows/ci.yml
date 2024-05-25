@@ -58,6 +58,13 @@ jobs:
         uses: ./
         with:
           milliseconds: 2000
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'This is a sample comment posting from jaychang99's github action!'
+            })
 
       - name: Print Output
         id: output
