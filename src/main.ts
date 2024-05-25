@@ -1,7 +1,6 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
 import { stdout } from 'process'
-import * as fs from 'fs'
 
 /**
  * The main function for the action.
@@ -45,7 +44,7 @@ export async function run(): Promise<void> {
 
     console.log(result)
 
-    fs.writeFileSync(process.env.GITHUB_OUTPUT!, `${'test-action'}=${result}`)
+    core.setOutput('result', result)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)

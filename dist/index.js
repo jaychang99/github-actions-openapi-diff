@@ -24953,7 +24953,6 @@ exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const wait_1 = __nccwpck_require__(5259);
 const process_1 = __nccwpck_require__(7282);
-const fs = __importStar(__nccwpck_require__(7147));
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -24988,7 +24987,7 @@ async function run() {
     ---
     `;
         console.log(result);
-        fs.writeFileSync(process.env.GITHUB_OUTPUT, `${'test-action'}=${result}`);
+        core.setOutput('result', result);
     }
     catch (error) {
         // Fail the workflow run if an error occurs

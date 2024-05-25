@@ -64,11 +64,11 @@ jobs:
           milliseconds: 2000
 
       # echo outputs from test-action's stdout
-      - name: Set Output
-        id: set-output
+      - name: Echo Output
+        id: echo-output
         run:
           echo "::set-output name=time::$(cat ${{
-          steps.test-action.outputs.stdout }})"
+          steps.test-action.outputs.result }})"
 
       - name: Post comment on PR
         uses: peter-evans/create-or-update-comment@v4
@@ -80,7 +80,7 @@ jobs:
             - With GitHub **Markdown** :sparkles:
             - Created by [create-or-update-comment][1]
             - and testing openapi diff 
-            ${{ steps.test-action.outputs.stdout }} 
+            ${{ steps.test-action.outputs.result }} 
             [1]: https://github.com/peter-evans/create-or-update-comment
           reactions: '+1'
 
