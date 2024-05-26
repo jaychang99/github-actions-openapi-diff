@@ -1,6 +1,8 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
 import { stdout } from 'process'
+import { getFileFromBranch } from 'src/utils/getFileFromBranch'
+import { diffOpenapiObject } from 'src/utils/diffOpenapiObject'
 
 /**
  * The main function for the action.
@@ -8,6 +10,23 @@ import { stdout } from 'process'
  */
 export async function run(): Promise<void> {
   try {
+    // parse two openapi files
+    const baseBranch = process.env.GITHUB_BASE_REF!
+    const headBranch = process.env.GITHUB_HEAD_REF!
+    const filePath = './openapi.json'
+
+    const baseFile = JSON.parse(
+      getFileFromBranch(baseBranch, filePath).toString()
+    )
+    const headFile = JSON.parse(
+      getFileFromBranch(headBranch, filePath).toString()
+    )
+
+    const diff = diffOpenapiObject(baseFile, headFile)
+
+    console.log('diff', diff)
+    const result = JSON.stringify(diff, null, 2)
+
     const ms: string = core.getInput('milliseconds')
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
@@ -25,22 +44,20 @@ export async function run(): Promise<void> {
 
     stdout.write('This is a single-line string\n')
 
-    const result = `
-    This is a multi-line string
-    
-    # API Differences
+    // const result = `
+    // This is a multi-line string
 
-    ## ADDED
-    ---
+    // # API Differences
 
+    // ## ADDED
+    // ---
 
-    ## MODIFIED
-    ---
+    // ## MODIFIED
+    // ---
 
-
-    ## DELETED
-    ---
-    `
+    // ## DELETED
+    // ---
+    // `
 
     console.log(result)
 
