@@ -24985,7 +24985,7 @@ async function run() {
         // parse two openapi files
         const baseBranch = process.env.GITHUB_BASE_REF;
         const headBranch = process.env.GITHUB_HEAD_REF;
-        const filePath = './openapi.json';
+        const filePath = 'openapi.json';
         const baseFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(baseBranch, filePath).toString());
         const headFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headBranch, filePath).toString());
         console.log('baseFile', baseFile);

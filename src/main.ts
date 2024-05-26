@@ -45,7 +45,7 @@ export async function run(): Promise<void> {
     // parse two openapi files
     const baseBranch = process.env.GITHUB_BASE_REF!
     const headBranch = process.env.GITHUB_HEAD_REF!
-    const filePath = './openapi.json'
+    const filePath = 'openapi.json'
 
     const baseFile = JSON.parse(
       getFileFromBranch(baseBranch, filePath).toString()
