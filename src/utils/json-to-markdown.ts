@@ -80,7 +80,7 @@ export function jsonToMarkdown(obj: SingleReponseObj): string {
 
     const requiredMark =
       requiredArray && requiredArray.includes(propertyName) ? 'REQUIRED 🔥' : ''
-    md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark}${requiredMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`
+    md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark}${requiredMark} \n📎${propertyMetadata.description ?? 'Description Not Provided'} \n📚EX) ${propertyMetadata.example ?? 'Example Not Provided'} \n\n`
 
     if (propertyMetadata.type === 'array') {
       const items = propertyMetadata.items?.properties
@@ -91,7 +91,7 @@ export function jsonToMarkdown(obj: SingleReponseObj): string {
         const nullableMarkSub = itemMetadata.nullable ? 'NULLABLE 🚨' : ''
         const nullableQuestionMarkSub = itemMetadata.nullable ? '?' : ''
         const indent = isArray ? '    ' : ''
-        md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description} \n${indent}📚EX) ${itemMetadata.example} \n\n`
+        md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description ?? 'Description Not Provided'} \n${indent}📚EX) ${itemMetadata.example ?? 'Example Not Provided'} \n\n`
       }
       if (propertyMetadata.type === 'array') md += '  ]\n'
     }
