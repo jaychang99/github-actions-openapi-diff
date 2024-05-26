@@ -82,7 +82,7 @@ export async function run(): Promise<void> {
     console.log(result)
 
     if (!isLocal) {
-      core.setOutput('result', result)
+      core.setOutput('result', markdownDiff)
     }
 
     if (isLocal) {

@@ -33443,7 +33443,7 @@ async function run() {
         const result = JSON.stringify(diff, null, 2);
         console.log(result);
         if (!isLocal) {
-            core.setOutput('result', result);
+            core.setOutput('result', markdownDiff);
         }
         if (isLocal) {
             // Define the port number
