@@ -5,6 +5,9 @@ import { getFileFromBranch } from './utils/get-file-from-branch'
 import { diffOpenapiObject } from './utils/diff-openapi-object'
 import fs from 'fs'
 import * as http from 'http'
+import { generateMarkdownDiff } from './utils/generate-markdown-diff'
+import markdownit from 'markdown-it'
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -71,6 +74,7 @@ export async function run(): Promise<void> {
     console.log('headFile', headFile)
 
     const diff = diffOpenapiObject(baseFile, headFile)
+    const markdownDiff = generateMarkdownDiff(baseFile, headFile)
 
     console.log('diff', diff)
     const result = JSON.stringify(diff, null, 2)
@@ -84,15 +88,22 @@ export async function run(): Promise<void> {
     if (isLocal) {
       // Define the port number
       const PORT = 5050
-
+      const md = markdownit()
+      const mdRenderedResult = md.render(markdownDiff)
       // Create a server
       const server: http.Server = http.createServer((req, res) => {
         // Set the response header
+        const styleSheetCssFile = fs
+          .readFileSync('./debug/markdown-stylesheet.css')
+          .toString()
+
+        const styleSheetTag = `<style>${styleSheetCssFile}</style>`
+
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
 
         // send reponse with result
-        res.end(result) //sds
-        res.end('dd')
+
+        res.end(styleSheetTag + mdRenderedResult)
       })
 
       // Start the server
