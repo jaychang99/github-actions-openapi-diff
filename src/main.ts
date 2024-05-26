@@ -22,6 +22,9 @@ export async function run(): Promise<void> {
       getFileFromBranch(headBranch, filePath).toString()
     )
 
+    console.log('baseFile', baseFile)
+    console.log('headFile', headFile)
+
     const diff = diffOpenapiObject(baseFile, headFile)
 
     console.log('diff', diff)
