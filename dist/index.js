@@ -24953,6 +24953,8 @@ exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const wait_1 = __nccwpck_require__(5259);
 const process_1 = __nccwpck_require__(7282);
+const get_file_from_branch_1 = __nccwpck_require__(9340);
+const diff_openapi_object_1 = __nccwpck_require__(9894);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -24970,22 +24972,27 @@ async function run() {
         core.setOutput('time', new Date().toTimeString());
         // print to stdout
         process_1.stdout.write('This is a single-line string\n');
-        const result = `
-    This is a multi-line string
-    
-    # API Differences
-
-    ## ADDED
-    ---
-
-
-    ## MODIFIED
-    ---
-
-
-    ## DELETED
-    ---
-    `;
+        // const result = `
+        // This is a multi-line string
+        // # API Differences
+        // ## ADDED
+        // ---
+        // ## MODIFIED
+        // ---
+        // ## DELETED
+        // ---
+        // `
+        // parse two openapi files
+        const baseBranch = process.env.GITHUB_BASE_REF;
+        const headBranch = process.env.GITHUB_HEAD_REF;
+        const filePath = './openapi.json';
+        const baseFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(baseBranch, filePath).toString());
+        const headFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headBranch, filePath).toString());
+        console.log('baseFile', baseFile);
+        console.log('headFile', headFile);
+        const diff = (0, diff_openapi_object_1.diffOpenapiObject)(baseFile, headFile);
+        console.log('diff', diff);
+        const result = JSON.stringify(diff, null, 2);
         console.log(result);
         core.setOutput('result', result);
     }
@@ -24996,6 +25003,79 @@ async function run() {
     }
 }
 exports.run = run;
+
+
+/***/ }),
+
+/***/ 9894:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.diffOpenapiObject = void 0;
+const diffOpenapiObject = (startOpenapiObj, targetOpenapiObj) => {
+    // diff two objects and return the diff
+    // diff not only keys but values, too.
+    // if the value is an object, diff it recursively
+    // if value is same don't return
+    // return startOpenapiObj;
+    const diff = (startObj, targetObj) => {
+        const keys = new Set([...Object.keys(startObj), ...Object.keys(targetObj)]);
+        const diffObj = {};
+        for (const key of keys) {
+            if (startObj[key] &&
+                targetObj[key] &&
+                typeof startObj[key] === 'object' &&
+                typeof targetObj[key] === 'object') {
+                const diffResult = diff(startObj[key], targetObj[key]);
+                if (Object.keys(diffResult).length > 0) {
+                    diffObj[key] = diffResult;
+                }
+            }
+            else if (startObj[key] !== targetObj[key]) {
+                diffObj[key] = targetObj[key];
+            }
+        }
+        // keys.forEach(key => {
+        //   if (
+        //     startObj[key] &&
+        //     targetObj[key] &&
+        //     typeof startObj[key] === 'object' &&
+        //     typeof targetObj[key] === 'object'
+        //   ) {
+        //     const diffResult = diff(startObj[key], targetObj[key])
+        //     if (Object.keys(diffResult).length > 0) {
+        //       diffObj[key] = diffResult
+        //     }
+        //   } else if (startObj[key] !== targetObj[key]) {
+        //     diffObj[key] = targetObj[key]
+        //   }
+        // })
+        return diffObj;
+    };
+    return diff(startOpenapiObj, targetOpenapiObj);
+};
+exports.diffOpenapiObject = diffOpenapiObject;
+
+
+/***/ }),
+
+/***/ 9340:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getFileFromBranch = void 0;
+const child_process_1 = __nccwpck_require__(2081);
+const fs_1 = __nccwpck_require__(7147);
+function getFileFromBranch(branch, filePath) {
+    (0, child_process_1.execSync)(`git fetch origin ${branch}`);
+    (0, child_process_1.execSync)(`git checkout FETCH_HEAD -- ${filePath}`);
+    return (0, fs_1.readFileSync)(filePath);
+}
+exports.getFileFromBranch = getFileFromBranch;
 
 
 /***/ }),
@@ -25046,6 +25126,14 @@ module.exports = require("async_hooks");
 
 "use strict";
 module.exports = require("buffer");
+
+/***/ }),
+
+/***/ 2081:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
 
 /***/ }),
 
