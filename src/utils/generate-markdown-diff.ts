@@ -6,6 +6,7 @@ export type CustomPathDiffItem = {
   url: string
   method: OpenAPIV3.HttpMethods
   endpointDetailData: OpenAPIV3.OperationObject
+  baseApiEndpoint?: OpenAPIV3.OperationObject // only used for modified endpoints
 }
 export type GenerateMarkdownDiff = (
   startOpenapiObj: OpenapiTypes,
@@ -36,11 +37,11 @@ export const generateMarkdownDiff: GenerateMarkdownDiff = (
     return formatSingleApiEndpointAsMarkdown(endpoint)
   })
 
-  const removedEndpointsMarkdown = removedEndpoints.map(endpoint => {
-    return formatSingleApiEndpointAsMarkdown(endpoint)
+  const modifiedEndpointsMarkdown = modifiedEndpoints.map(endpoint => {
+    return formatSingleApiEndpointAsMarkdown(endpoint, true)
   })
 
-  const modifiedEndpointsMarkdown = modifiedEndpoints.map(endpoint => {
+  const removedEndpointsMarkdown = removedEndpoints.map(endpoint => {
     return formatSingleApiEndpointAsMarkdown(endpoint)
   })
 
@@ -98,7 +99,8 @@ const compareTwoOpenApiPaths = (
                 resultArray.push({
                   url: path,
                   method,
-                  endpointDetailData: item
+                  endpointDetailData: item,
+                  baseApiEndpoint: startItem
                 })
               }
             }

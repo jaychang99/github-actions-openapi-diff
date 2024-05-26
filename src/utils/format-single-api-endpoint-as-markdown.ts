@@ -1,9 +1,11 @@
 import { OpenAPIV3 } from 'openapi-types'
 import { CustomPathDiffItem } from './generate-markdown-diff'
 import { SchemaObject, jsonToMarkdown } from './json-to-markdown'
+import { bold } from '../formatters/bold'
 
 type FormatSingleApiEndpointAsMarkdown = (
-  endpoint: CustomPathDiffItem
+  endpoint: CustomPathDiffItem,
+  shouldCheckForChanges?: boolean
 ) => string
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,8 +25,8 @@ const symbolByMethod: Record<CustomPathDiffItem['method'], string> = {
 }
 
 export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdown =
-  endpoint => {
-    const { url, method, endpointDetailData } = endpoint
+  (endpoint, shouldCheckForChanges = false) => {
+    const { url, method, endpointDetailData, baseApiEndpoint } = endpoint
     const { responses } = endpointDetailData
     const successResponse = (responses['200'] ??
       responses['201']) as OpenAPIV3.ResponseObject // all refs have been resolved in main.ts
@@ -43,6 +45,22 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
     ).map(([key, value]) => {
       if (isReferenceObject(value)) {
         return `| ${key} | - | - | - | - |`
+      }
+
+      if (shouldCheckForChanges && baseApiEndpoint) {
+        const isAdded = Object.keys(baseApiEndpoint.parameters ?? {}).includes(
+          key
+        )
+        const isRemoved = !Object.keys(
+          endpointDetailData.parameters ?? {}
+        ).includes(key)
+        const shouldEmphasize = isAdded || isRemoved
+
+        if (shouldEmphasize) {
+          return `| ${bold(value.name)} ${isAdded ? '➕✅' : ''}${isRemoved ? '➖❌' : ''} | ${bold(value.required)} | ${bold(value.in)} | ${bold(value.description)} | ${bold(value.example)} |`
+        }
+
+        return `| ${value.name} | ${value.required} | ${value.in} | ${value.description} | ${value.example} |`
       }
 
       return `| ${value.name} | ${value.required} | ${value.in} | ${value.description} | ${value.example} |`
