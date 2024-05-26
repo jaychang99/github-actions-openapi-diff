@@ -118,7 +118,7 @@ ${
   doesHaveRequestBody
     ? `
 ### Request Body
-- Content-Type: ${requestBody?.content?.['application/json']?.schema?.type ?? 'Not Provided'}
+- Content-Type: ${Object.keys(requestBody.content)[0] ?? 'Not Provided'}
 - Description: ${requestBody?.description ?? 'Not Provided'}
 - Example: ${requestBody?.content?.['application/json']?.example ?? 'Not Provided'}
 - Content Required: ${requestBody?.required ?? 'Not Provided'}
