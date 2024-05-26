@@ -83,7 +83,7 @@ const compareTwoOpenApiPaths = (
       const item = pathItemObjWithAllMethods?.[method]
       if (item) {
         const doesEndpointExistInStart = from.paths[path]
-        if (!doesEndpointExistInStart) {
+        if (!doesEndpointExistInStart && !shouldCheckForChanges) {
           resultArray.push({
             url: path,
             method,
@@ -93,9 +93,10 @@ const compareTwoOpenApiPaths = (
           if (shouldCheckForChanges) {
             // method + url exists in both start and target
             // check for any changes
-            const startItem = doesEndpointExistInStart[method]
+            const startItem = doesEndpointExistInStart?.[method]
             if (startItem) {
               if (JSON.stringify(startItem) !== JSON.stringify(item)) {
+                console.log('startItem', startItem)
                 resultArray.push({
                   url: path,
                   method,
