@@ -7,6 +7,7 @@ import fs from 'fs'
 import * as http from 'http'
 import { generateMarkdownDiff } from './utils/generate-markdown-diff'
 import markdownit from 'markdown-it'
+import { resolveRefs } from './utils/resolve-refs'
 
 /**
  * The main function for the action.
@@ -73,8 +74,14 @@ export async function run(): Promise<void> {
     console.log('baseFile', baseFile)
     console.log('headFile', headFile)
 
-    const diff = diffOpenapiObject(baseFile, headFile)
-    const markdownDiff = generateMarkdownDiff(baseFile, headFile)
+    const refResolvedBaseFile = resolveRefs(baseFile, baseFile)
+    const refResolvedHeadFile = resolveRefs(headFile, headFile)
+
+    const diff = diffOpenapiObject(refResolvedBaseFile, refResolvedHeadFile)
+    const markdownDiff = generateMarkdownDiff(
+      refResolvedBaseFile,
+      refResolvedHeadFile
+    )
 
     console.log('diff', diff)
     const result = JSON.stringify(diff, null, 2)
