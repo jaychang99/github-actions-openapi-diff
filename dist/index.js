@@ -33389,11 +33389,11 @@ const core = __importStar(__nccwpck_require__(2186));
 const wait_1 = __nccwpck_require__(5259);
 const process_1 = __nccwpck_require__(7282);
 const get_file_from_branch_1 = __nccwpck_require__(9340);
-const diff_openapi_object_1 = __nccwpck_require__(9894);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const http = __importStar(__nccwpck_require__(3685));
 const generate_markdown_diff_1 = __nccwpck_require__(4197);
 const markdown_it_1 = __importDefault(__nccwpck_require__(6696));
+const resolve_refs_1 = __nccwpck_require__(4511);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -33435,13 +33435,15 @@ async function run() {
             ? JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-head.json').toString() // testing file in local env
             )
             : JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headBranch, filePath).toString());
-        console.log('baseFile', baseFile);
-        console.log('headFile', headFile);
-        const diff = (0, diff_openapi_object_1.diffOpenapiObject)(baseFile, headFile);
-        const markdownDiff = (0, generate_markdown_diff_1.generateMarkdownDiff)(baseFile, headFile);
-        console.log('diff', diff);
-        const result = JSON.stringify(diff, null, 2);
-        console.log(result);
+        // console.log('baseFile', baseFile)
+        // console.log('headFile', headFile)
+        const refResolvedBaseFile = (0, resolve_refs_1.resolveRefs)(baseFile, baseFile);
+        const refResolvedHeadFile = (0, resolve_refs_1.resolveRefs)(headFile, headFile);
+        // const diff = diffOpenapiObject(refResolvedBaseFile, refResolvedHeadFile)
+        const markdownDiff = (0, generate_markdown_diff_1.generateMarkdownDiff)(refResolvedBaseFile, refResolvedHeadFile);
+        // console.log('diff', diff)
+        // const result = JSON.stringify(diff, null, 2)
+        // console.log(result)
         if (!isLocal) {
             core.setOutput('result', markdownDiff);
         }
@@ -33478,67 +33480,14 @@ exports.run = run;
 
 /***/ }),
 
-/***/ 9894:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.diffOpenapiObject = void 0;
-const diffOpenapiObject = (startOpenapiObj, targetOpenapiObj) => {
-    // diff two objects and return the diff
-    // diff not only keys but values, too.
-    // if the value is an object, diff it recursively
-    // if value is same don't return
-    // return startOpenapiObj;
-    const diff = (startObj, targetObj) => {
-        const keys = new Set([...Object.keys(startObj), ...Object.keys(targetObj)]);
-        const diffObj = {};
-        for (const key of keys) {
-            if (startObj[key] &&
-                targetObj[key] &&
-                typeof startObj[key] === 'object' &&
-                typeof targetObj[key] === 'object') {
-                const diffResult = diff(startObj[key], targetObj[key]);
-                if (Object.keys(diffResult).length > 0) {
-                    diffObj[key] = diffResult;
-                }
-            }
-            else if (startObj[key] !== targetObj[key]) {
-                diffObj[key] = targetObj[key];
-            }
-        }
-        // keys.forEach(key => {
-        //   if (
-        //     startObj[key] &&
-        //     targetObj[key] &&
-        //     typeof startObj[key] === 'object' &&
-        //     typeof targetObj[key] === 'object'
-        //   ) {
-        //     const diffResult = diff(startObj[key], targetObj[key])
-        //     if (Object.keys(diffResult).length > 0) {
-        //       diffObj[key] = diffResult
-        //     }
-        //   } else if (startObj[key] !== targetObj[key]) {
-        //     diffObj[key] = targetObj[key]
-        //   }
-        // })
-        return diffObj;
-    };
-    return diff(startOpenapiObj, targetOpenapiObj);
-};
-exports.diffOpenapiObject = diffOpenapiObject;
-
-
-/***/ }),
-
 /***/ 5676:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.formatSingleApiEndpointAsMarkdown = void 0;
+const json_to_markdown_1 = __nccwpck_require__(7908);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isReferenceObject = (obj) => {
     return obj.$ref !== undefined;
@@ -33555,6 +33504,15 @@ const symbolByMethod = {
 };
 const formatSingleApiEndpointAsMarkdown = endpoint => {
     const { url, method, endpointDetailData } = endpoint;
+    const { responses } = endpointDetailData;
+    const successResponse = (responses['200'] ??
+        responses['201']); // all refs have been resolved in main.ts
+    const successResponseContent = successResponse?.content?.['application/json'] ??
+        successResponse?.content?.['text/plain'];
+    const successResponseContentSchema = successResponseContent?.schema;
+    const responseMarkdown = successResponseContent?.schema
+        ? (0, json_to_markdown_1.jsonToMarkdown)({ schema: successResponseContentSchema })
+        : '';
     const parameterMarkdownArray = Object.entries(endpointDetailData.parameters ?? {}).map(([key, value]) => {
         if (isReferenceObject(value)) {
             return `| ${key} | - | - | - | - |`;
@@ -33577,8 +33535,13 @@ ${doesHaveParameters
 ${parameterMarkdownArray.join('\n')}
 `
         : ''}
+
+### Response Parameters
+
+${responseMarkdown}
+
 `;
-    console.log(generatedMarkdown);
+    // console.log(generatedMarkdown)
     return generatedMarkdown;
 };
 exports.formatSingleApiEndpointAsMarkdown = formatSingleApiEndpointAsMarkdown;
@@ -33597,15 +33560,15 @@ const format_single_api_endpoint_as_markdown_1 = __nccwpck_require__(5676);
 const generateMarkdownDiff = (startOpenapiObj, targetOpenapiObj) => {
     const start = startOpenapiObj;
     const target = targetOpenapiObj;
-    console.log(Object.entries(target.paths));
+    // console.log(Object.entries(target.paths))
     const addedEndpoints = [];
     const removedEndpoints = [];
     const modifiedEndpoints = [];
     compareTwoOpenApiPaths(start, target, addedEndpoints);
     compareTwoOpenApiPaths(target, start, removedEndpoints);
     compareTwoOpenApiPaths(start, target, modifiedEndpoints, true);
-    console.log(addedEndpoints);
-    console.log(removedEndpoints);
+    // console.log(addedEndpoints)
+    // console.log(removedEndpoints)
     const addedEndpointsMarkdown = addedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
@@ -33692,6 +33655,69 @@ function getFileFromBranch(branch, filePath) {
     return (0, fs_1.readFileSync)(filePath);
 }
 exports.getFileFromBranch = getFileFromBranch;
+
+
+/***/ }),
+
+/***/ 7908:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Utility function to format JSON as Markdown code block
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.jsonToMarkdown = void 0;
+// recursively format nested objects until obj.type is not 'object' , 'array' , null or undefined
+// WRITE YOUR CODE HERE
+function jsonToMarkdown(obj) {
+    const properties = obj.schema.properties;
+    if (!properties)
+        return '';
+    let md = '```markdown\n';
+    for (const property of Object.entries(properties)) {
+        const [propertyName, propertyMetadata] = property;
+        md += `${propertyName} : ${propertyMetadata.type}; \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`;
+    }
+    md += '```';
+    return md;
+}
+exports.jsonToMarkdown = jsonToMarkdown;
+
+
+/***/ }),
+
+/***/ 4511:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.resolveRefs = void 0;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function resolveRefs(obj, root) {
+    if (Array.isArray(obj)) {
+        return obj.map(item => resolveRefs(item, root));
+    }
+    else if (obj !== null && typeof obj === 'object') {
+        // eslint-disable-next-line no-prototype-builtins
+        if (obj.hasOwnProperty('$ref')) {
+            const refPath = obj['$ref'].replace('#/', '').split('/');
+            let refObj = root;
+            for (const part of refPath) {
+                refObj = refObj[part];
+                if (!refObj) {
+                    throw new Error(`Reference not found: ${obj['$ref']}`);
+                }
+            }
+            return resolveRefs(refObj, root); // Resolve recursive $ref in the referenced object
+        }
+        for (const key in obj) {
+            obj[key] = resolveRefs(obj[key], root);
+        }
+    }
+    return obj;
+}
+exports.resolveRefs = resolveRefs;
 
 
 /***/ }),
