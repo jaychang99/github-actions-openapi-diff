@@ -2,7 +2,6 @@ import * as core from '@actions/core'
 import { wait } from './wait'
 import { stdout } from 'process'
 import { getFileFromBranch } from './utils/get-file-from-branch'
-import { diffOpenapiObject } from './utils/diff-openapi-object'
 import fs from 'fs'
 import * as http from 'http'
 import { generateMarkdownDiff } from './utils/generate-markdown-diff'
@@ -71,22 +70,22 @@ export async function run(): Promise<void> {
         )
       : JSON.parse(getFileFromBranch(headBranch, filePath).toString())
 
-    console.log('baseFile', baseFile)
-    console.log('headFile', headFile)
+    // console.log('baseFile', baseFile)
+    // console.log('headFile', headFile)
 
     const refResolvedBaseFile = resolveRefs(baseFile, baseFile)
     const refResolvedHeadFile = resolveRefs(headFile, headFile)
 
-    const diff = diffOpenapiObject(refResolvedBaseFile, refResolvedHeadFile)
+    // const diff = diffOpenapiObject(refResolvedBaseFile, refResolvedHeadFile)
     const markdownDiff = generateMarkdownDiff(
       refResolvedBaseFile,
       refResolvedHeadFile
     )
 
-    console.log('diff', diff)
-    const result = JSON.stringify(diff, null, 2)
+    // console.log('diff', diff)
+    // const result = JSON.stringify(diff, null, 2)
 
-    console.log(result)
+    // console.log(result)
 
     if (!isLocal) {
       core.setOutput('result', markdownDiff)

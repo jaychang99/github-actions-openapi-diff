@@ -19,7 +19,7 @@ export const generateMarkdownDiff: GenerateMarkdownDiff = (
   const start = startOpenapiObj
   const target = targetOpenapiObj
 
-  console.log(Object.entries(target.paths))
+  // console.log(Object.entries(target.paths))
 
   const addedEndpoints: CustomPathDiffItem[] = []
   const removedEndpoints: CustomPathDiffItem[] = []
@@ -29,8 +29,8 @@ export const generateMarkdownDiff: GenerateMarkdownDiff = (
   compareTwoOpenApiPaths(target, start, removedEndpoints)
   compareTwoOpenApiPaths(start, target, modifiedEndpoints, true)
 
-  console.log(addedEndpoints)
-  console.log(removedEndpoints)
+  // console.log(addedEndpoints)
+  // console.log(removedEndpoints)
 
   const addedEndpointsMarkdown = addedEndpoints.map(endpoint => {
     return formatSingleApiEndpointAsMarkdown(endpoint)
