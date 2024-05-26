@@ -4,12 +4,12 @@ import { OpenAPIV3 } from 'openapi-types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-export type SchemaObject = ArraySchemaObject | NonArraySchemaObject
-interface ArraySchemaObject extends CustomBaseSchemaObject {
+export type SchemaObject = CustomArraySchemaObject | CustonNonArraySchemaObject
+interface CustomArraySchemaObject extends CustomBaseSchemaObject {
   type: OpenAPIV3.ArraySchemaObjectType
   items: SchemaObject // All refs are resolved in main.ts before calling this function
 }
-interface NonArraySchemaObject extends CustomBaseSchemaObject {
+interface CustonNonArraySchemaObject extends CustomBaseSchemaObject {
   type?: OpenAPIV3.NonArraySchemaObjectType
 }
 interface CustomBaseSchemaObject {
@@ -61,20 +61,38 @@ export type SingleReponseObj = {
 // WRITE YOUR CODE HERE
 
 export function jsonToMarkdown(obj: SingleReponseObj): string {
-  const properties = obj.schema.properties
+  const isArray = obj.schema.type === 'array'
+  const properties =
+    obj.schema.type === 'array'
+      ? obj.schema.items?.properties
+      : obj.schema.properties
 
   if (!properties) return ''
 
   let md = '```markdown\n'
 
+  if (isArray) md += '[\n'
   for (const property of Object.entries(properties)) {
     const [propertyName, propertyMetadata] = property
-
     const nullableMark = propertyMetadata.nullable ? 'NULLABLE 🚨' : ''
     const nullableQuestionMark = propertyMetadata.nullable ? '?' : ''
-
     md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`
+
+    if (propertyMetadata.type === 'array') {
+      const items = propertyMetadata.items?.properties
+      if (!items) continue
+      if (propertyMetadata.type === 'array') md += '  [\n'
+      for (const item of Object.entries(items)) {
+        const [itemName, itemMetadata] = item
+        const nullableMarkSub = itemMetadata.nullable ? 'NULLABLE 🚨' : ''
+        const nullableQuestionMarkSub = itemMetadata.nullable ? '?' : ''
+        const indent = isArray ? '    ' : ''
+        md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description} \n${indent}📚EX) ${itemMetadata.example} \n\n`
+      }
+      if (propertyMetadata.type === 'array') md += '  ]\n'
+    }
   }
+  if (isArray) md += ']\n'
 
   md += '```'
 
