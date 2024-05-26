@@ -33352,6 +33352,19 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 6037:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.bold = void 0;
+const bold = (text) => `**${text}**`;
+exports.bold = bold;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -33488,6 +33501,7 @@ exports.run = run;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.formatSingleApiEndpointAsMarkdown = void 0;
 const json_to_markdown_1 = __nccwpck_require__(7908);
+const bold_1 = __nccwpck_require__(6037);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isReferenceObject = (obj) => {
     return obj.$ref !== undefined;
@@ -33502,8 +33516,8 @@ const symbolByMethod = {
     head: '🔍',
     trace: '🔍'
 };
-const formatSingleApiEndpointAsMarkdown = endpoint => {
-    const { url, method, endpointDetailData } = endpoint;
+const formatSingleApiEndpointAsMarkdown = (endpoint, shouldCheckForChanges = false) => {
+    const { url, method, endpointDetailData, baseApiEndpoint } = endpoint;
     const { responses } = endpointDetailData;
     const successResponse = (responses['200'] ??
         responses['201']); // all refs have been resolved in main.ts
@@ -33516,6 +33530,15 @@ const formatSingleApiEndpointAsMarkdown = endpoint => {
     const parameterMarkdownArray = Object.entries(endpointDetailData.parameters ?? {}).map(([key, value]) => {
         if (isReferenceObject(value)) {
             return `| ${key} | - | - | - | - |`;
+        }
+        if (shouldCheckForChanges && baseApiEndpoint) {
+            const isAdded = Object.keys(baseApiEndpoint.parameters ?? {}).includes(key);
+            const isRemoved = !Object.keys(endpointDetailData.parameters ?? {}).includes(key);
+            const shouldEmphasize = isAdded || isRemoved;
+            if (shouldEmphasize) {
+                return `| ${(0, bold_1.bold)(value.name)} ${isAdded ? '➕✅' : ''}${isRemoved ? '➖❌' : ''} | ${(0, bold_1.bold)(value.required)} | ${(0, bold_1.bold)(value.in)} | ${(0, bold_1.bold)(value.description)} | ${(0, bold_1.bold)(value.example)} |`;
+            }
+            return `| ${value.name} | ${value.required} | ${value.in} | ${value.description} | ${value.example} |`;
         }
         return `| ${value.name} | ${value.required} | ${value.in} | ${value.description} | ${value.example} |`;
     });
@@ -33572,10 +33595,10 @@ const generateMarkdownDiff = (startOpenapiObj, targetOpenapiObj) => {
     const addedEndpointsMarkdown = addedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
-    const removedEndpointsMarkdown = removedEndpoints.map(endpoint => {
-        return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
-    });
     const modifiedEndpointsMarkdown = modifiedEndpoints.map(endpoint => {
+        return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint, true);
+    });
+    const removedEndpointsMarkdown = removedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
     return `
@@ -33609,7 +33632,7 @@ const compareTwoOpenApiPaths = (from, to, resultArray, shouldCheckForChanges = f
             const item = pathItemObjWithAllMethods?.[method];
             if (item) {
                 const doesEndpointExistInStart = from.paths[path];
-                if (!doesEndpointExistInStart) {
+                if (!doesEndpointExistInStart && !shouldCheckForChanges) {
                     resultArray.push({
                         url: path,
                         method,
@@ -33620,13 +33643,15 @@ const compareTwoOpenApiPaths = (from, to, resultArray, shouldCheckForChanges = f
                     if (shouldCheckForChanges) {
                         // method + url exists in both start and target
                         // check for any changes
-                        const startItem = doesEndpointExistInStart[method];
+                        const startItem = doesEndpointExistInStart?.[method];
                         if (startItem) {
                             if (JSON.stringify(startItem) !== JSON.stringify(item)) {
+                                console.log('startItem', startItem);
                                 resultArray.push({
                                     url: path,
                                     method,
-                                    endpointDetailData: item
+                                    endpointDetailData: item,
+                                    baseApiEndpoint: startItem
                                 });
                             }
                         }
@@ -33670,14 +33695,39 @@ exports.jsonToMarkdown = void 0;
 // recursively format nested objects until obj.type is not 'object' , 'array' , null or undefined
 // WRITE YOUR CODE HERE
 function jsonToMarkdown(obj) {
-    const properties = obj.schema.properties;
+    const isArray = obj.schema.type === 'array';
+    const properties = obj.schema.type === 'array'
+        ? obj.schema.items?.properties
+        : obj.schema.properties;
     if (!properties)
         return '';
     let md = '```markdown\n';
+    if (isArray)
+        md += '[\n';
     for (const property of Object.entries(properties)) {
         const [propertyName, propertyMetadata] = property;
-        md += `${propertyName} : ${propertyMetadata.type}; \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`;
+        const nullableMark = propertyMetadata.nullable ? 'NULLABLE 🚨' : '';
+        const nullableQuestionMark = propertyMetadata.nullable ? '?' : '';
+        md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`;
+        if (propertyMetadata.type === 'array') {
+            const items = propertyMetadata.items?.properties;
+            if (!items)
+                continue;
+            if (propertyMetadata.type === 'array')
+                md += '  [\n';
+            for (const item of Object.entries(items)) {
+                const [itemName, itemMetadata] = item;
+                const nullableMarkSub = itemMetadata.nullable ? 'NULLABLE 🚨' : '';
+                const nullableQuestionMarkSub = itemMetadata.nullable ? '?' : '';
+                const indent = isArray ? '    ' : '';
+                md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description} \n${indent}📚EX) ${itemMetadata.example} \n\n`;
+            }
+            if (propertyMetadata.type === 'array')
+                md += '  ]\n';
+        }
     }
+    if (isArray)
+        md += ']\n';
     md += '```';
     return md;
 }
