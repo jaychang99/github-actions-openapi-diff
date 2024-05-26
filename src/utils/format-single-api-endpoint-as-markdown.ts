@@ -1,4 +1,5 @@
-import { CustomPathDiffItem } from '../utils/generate-markdown-diff'
+import { CustomPathDiffItem } from './generate-markdown-diff'
+import { jsonToMarkdown } from './json-to-markdown'
 
 type FormatSingleApiEndpointAsMarkdown = (
   endpoint: CustomPathDiffItem
@@ -23,6 +24,14 @@ const symbolByMethod: Record<CustomPathDiffItem['method'], string> = {
 export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdown =
   endpoint => {
     const { url, method, endpointDetailData } = endpoint
+    const { responses } = endpointDetailData
+    const successResponse = responses['200'] ?? responses['201']
+    const successResponseContent = isReferenceObject(successResponse)
+      ? {}
+      : successResponse?.content?.['application/json'] ??
+        successResponse?.content?.['text/plain']
+
+    const responseMarkdown = jsonToMarkdown(successResponseContent)
 
     const parameterMarkdownArray = Object.entries(
       endpointDetailData.parameters ?? {}
@@ -53,6 +62,11 @@ ${parameterMarkdownArray.join('\n')}
 `
     : ''
 }
+
+### Response Parameters
+
+${responseMarkdown}
+
 `
 
     console.log(generatedMarkdown)
