@@ -72,8 +72,8 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
 ---
 ## ${symbolByMethod[method]} ${method.toUpperCase()}: ${url}
 
-- ${endpointDetailData.summary}
-- ${endpointDetailData.description}
+- Summary: ${endpointDetailData.summary ?? 'Not Provided'}
+- Description: ${endpointDetailData.description ?? 'Not Provided'}
 
 ${
   doesHaveParameters
