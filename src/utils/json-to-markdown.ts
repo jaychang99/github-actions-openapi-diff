@@ -72,11 +72,15 @@ export function jsonToMarkdown(obj: SingleReponseObj): string {
   let md = '```markdown\n'
 
   if (isArray) md += '[\n'
+  const requiredArray = obj.schema.required
   for (const property of Object.entries(properties)) {
     const [propertyName, propertyMetadata] = property
     const nullableMark = propertyMetadata.nullable ? 'NULLABLE 🚨' : ''
     const nullableQuestionMark = propertyMetadata.nullable ? '?' : ''
-    md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`
+
+    const requiredMark =
+      requiredArray && requiredArray.includes(propertyName) ? 'REQUIRED 🔥' : ''
+    md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark}${requiredMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`
 
     if (propertyMetadata.type === 'array') {
       const items = propertyMetadata.items?.properties
