@@ -33519,14 +33519,22 @@ const symbolByMethod = {
 const formatSingleApiEndpointAsMarkdown = (endpoint, shouldCheckForChanges = false) => {
     const { url, method, endpointDetailData, baseApiEndpoint } = endpoint;
     const { responses } = endpointDetailData;
+    const requestBody = endpointDetailData.requestBody; // all refs have been resolved in main.ts
     const successResponse = (responses['200'] ??
         responses['201']); // all refs have been resolved in main.ts
     const successResponseContent = successResponse?.content?.['application/json'] ??
         successResponse?.content?.['text/plain'];
     const successResponseContentSchema = successResponseContent?.schema;
+    const requestBodyMarkdown = requestBody?.content?.['application/json']
+        ?.schema
+        ? (0, json_to_markdown_1.jsonToMarkdown)({
+            schema: requestBody?.content?.['application/json']?.schema
+        })
+        : '';
     const responseMarkdown = successResponseContent?.schema
         ? (0, json_to_markdown_1.jsonToMarkdown)({ schema: successResponseContentSchema })
         : '';
+    const doesHaveRequestBody = requestBody !== undefined;
     const parameterMarkdownArray = Object.entries(endpointDetailData.parameters ?? {}).map(([key, value]) => {
         if (isReferenceObject(value)) {
             return `| ${key} | - | - | - | - |`;
@@ -33556,6 +33564,18 @@ ${doesHaveParameters
 | Name | Required | In | Description | Example |
 | ---- | -------- | -- | ----------- | ------- |
 ${parameterMarkdownArray.join('\n')}
+`
+        : ''}
+
+${doesHaveRequestBody
+        ? `
+### Request Body
+- Content-Type: ${Object.keys(requestBody.content)[0] ?? 'Not Provided'}
+- Description: ${requestBody?.description ?? 'Not Provided'}
+- Example: ${requestBody?.content?.['application/json']?.example ?? 'Not Provided'}
+- Content Required: ${requestBody?.required ?? 'Not Provided'}
+
+${requestBodyMarkdown}
 `
         : ''}
 
@@ -33704,11 +33724,13 @@ function jsonToMarkdown(obj) {
     let md = '```markdown\n';
     if (isArray)
         md += '[\n';
+    const requiredArray = obj.schema.required;
     for (const property of Object.entries(properties)) {
         const [propertyName, propertyMetadata] = property;
         const nullableMark = propertyMetadata.nullable ? 'NULLABLE 🚨' : '';
         const nullableQuestionMark = propertyMetadata.nullable ? '?' : '';
-        md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`;
+        const requiredMark = requiredArray && requiredArray.includes(propertyName) ? 'REQUIRED 🔥' : '';
+        md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark}${requiredMark} \n📎${propertyMetadata.description ?? 'Description Not Provided'} \n📚EX) ${propertyMetadata.example ?? 'Example Not Provided'} \n\n`;
         if (propertyMetadata.type === 'array') {
             const items = propertyMetadata.items?.properties;
             if (!items)
@@ -33720,7 +33742,7 @@ function jsonToMarkdown(obj) {
                 const nullableMarkSub = itemMetadata.nullable ? 'NULLABLE 🚨' : '';
                 const nullableQuestionMarkSub = itemMetadata.nullable ? '?' : '';
                 const indent = isArray ? '    ' : '';
-                md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description} \n${indent}📚EX) ${itemMetadata.example} \n\n`;
+                md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description ?? 'Description Not Provided'} \n${indent}📚EX) ${itemMetadata.example ?? 'Example Not Provided'} \n\n`;
             }
             if (propertyMetadata.type === 'array')
                 md += '  ]\n';
