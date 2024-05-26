@@ -4,6 +4,7 @@ import { stdout } from 'process'
 import { getFileFromBranch } from './utils/get-file-from-branch'
 import { diffOpenapiObject } from './utils/diff-openapi-object'
 import fs from 'fs'
+import * as http from 'http'
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -78,6 +79,26 @@ export async function run(): Promise<void> {
 
     if (!isLocal) {
       core.setOutput('result', result)
+    }
+
+    if (isLocal) {
+      // Define the port number
+      const PORT = 5050
+
+      // Create a server
+      const server: http.Server = http.createServer((req, res) => {
+        // Set the response header
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+
+        // send reponse with result
+        res.end(result) //sds
+        res.end('dd')
+      })
+
+      // Start the server
+      server.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`)
+      })
     }
   } catch (error) {
     // Fail the workflow run if an error occurs
