@@ -126,7 +126,18 @@
     "schemas": {
       "CreateCatDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "age"
+        ]
       },
       "UpdateCatDto": {
         "type": "object",

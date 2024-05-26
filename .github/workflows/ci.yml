@@ -47,17 +47,34 @@ jobs:
   test-action:
     name: GitHub Actions Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
 
     steps:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
 
-      - name: Test Local Action
+      - name: Test Local Action And Capture Output
         id: test-action
         uses: ./
         with:
           milliseconds: 2000
+
+      # echo outputs from test-action's stdout
+      - name: Echo Output
+        id: echo-output
+        run: echo "${{ steps.test-action.outputs.result }})"
+
+      - name: Post comment on PR
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+
+          body: |
+            ${{ steps.test-action.outputs.result }}
 
       - name: Print Output
         id: output

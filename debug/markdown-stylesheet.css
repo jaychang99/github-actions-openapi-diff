@@ -1,0 +1,34 @@
+* {
+  all: revert;
+
+  table {
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
+    border-color: inherit !important;
+    display: block !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    overflow: auto !important;
+  }
+
+  tbody,
+  td,
+  tfoot,
+  th,
+  thead,
+  tr {
+    border-color: inherit !important;
+    border-style: solid !important;
+    border-width: 1px !important;
+    /* fix width of column depending on the longest cell */
+    padding: 0.5em 1em !important;
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
+  }
+
+  th {
+    font-weight: bold !important;
+    color: black;
+    background-color: white;
+  }
+}
