@@ -70,7 +70,10 @@ export function jsonToMarkdown(obj: SingleReponseObj): string {
   for (const property of Object.entries(properties)) {
     const [propertyName, propertyMetadata] = property
 
-    md += `${propertyName} : ${propertyMetadata.type}; \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`
+    const nullableMark = propertyMetadata.nullable ? 'NULLABLE 🚨' : ''
+    const nullableQuestionMark = propertyMetadata.nullable ? '?' : ''
+
+    md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark} \n📎${propertyMetadata.description} \n📚EX) ${propertyMetadata.example} \n\n`
   }
 
   md += '```'
