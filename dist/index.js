@@ -24948,6 +24948,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
@@ -24955,13 +24958,16 @@ const wait_1 = __nccwpck_require__(5259);
 const process_1 = __nccwpck_require__(7282);
 const get_file_from_branch_1 = __nccwpck_require__(9340);
 const diff_openapi_object_1 = __nccwpck_require__(9894);
+const fs_1 = __importDefault(__nccwpck_require__(7147));
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
     try {
-        const ms = core.getInput('milliseconds');
+        const isLocal = process.env.OPENAPI_DIFF_NODE_ENV === 'local';
+        console.log('----starting in', isLocal ? 'LOCAL' : 'GITHUB', 'environment----');
+        const ms = isLocal ? '500' : core.getInput('milliseconds');
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Waiting ${ms} milliseconds ...`);
         // Log the current timestamp, wait, then log the new timestamp
@@ -24986,15 +24992,23 @@ async function run() {
         const baseBranch = process.env.GITHUB_BASE_REF;
         const headBranch = process.env.GITHUB_HEAD_REF;
         const filePath = 'openapi.json';
-        const baseFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(baseBranch, filePath).toString());
-        const headFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headBranch, filePath).toString());
+        const baseFile = isLocal
+            ? JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-base.json').toString() // testing file in local env
+            )
+            : JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(baseBranch, filePath).toString());
+        const headFile = isLocal
+            ? JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-head.json').toString() // testing file in local env
+            )
+            : JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headBranch, filePath).toString());
         console.log('baseFile', baseFile);
         console.log('headFile', headFile);
         const diff = (0, diff_openapi_object_1.diffOpenapiObject)(baseFile, headFile);
         console.log('diff', diff);
         const result = JSON.stringify(diff, null, 2);
         console.log(result);
-        core.setOutput('result', result);
+        if (!isLocal) {
+            core.setOutput('result', result);
+        }
     }
     catch (error) {
         // Fail the workflow run if an error occurs

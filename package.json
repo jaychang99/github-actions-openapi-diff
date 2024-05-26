@@ -32,6 +32,8 @@
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
     "package": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "package:watch": "npm run package -- --watch",
+    "package:watch:local": "npx ncc build src/index.ts -o .local/dist --source-map --license licenses.txt",
+    "dev": "npm run package:watch:local && OPENAPI_DIFF_NODE_ENV=local node ./.local/dist/index.js",
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
