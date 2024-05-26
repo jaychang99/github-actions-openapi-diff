@@ -1,5 +1,6 @@
+import { OpenAPIV3 } from 'openapi-types'
 import { CustomPathDiffItem } from './generate-markdown-diff'
-import { jsonToMarkdown } from './json-to-markdown'
+import { SchemaObject, jsonToMarkdown } from './json-to-markdown'
 
 type FormatSingleApiEndpointAsMarkdown = (
   endpoint: CustomPathDiffItem
@@ -25,13 +26,17 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
   endpoint => {
     const { url, method, endpointDetailData } = endpoint
     const { responses } = endpointDetailData
-    const successResponse = responses['200'] ?? responses['201']
-    const successResponseContent = isReferenceObject(successResponse)
-      ? {}
-      : successResponse?.content?.['application/json'] ??
-        successResponse?.content?.['text/plain']
+    const successResponse = (responses['200'] ??
+      responses['201']) as OpenAPIV3.ResponseObject // all refs have been resolved in main.ts
+    const successResponseContent =
+      successResponse?.content?.['application/json'] ??
+      successResponse?.content?.['text/plain']
+    const successResponseContentSchema =
+      successResponseContent?.schema as SchemaObject
 
-    const responseMarkdown = jsonToMarkdown(successResponseContent)
+    const responseMarkdown = successResponseContent?.schema
+      ? jsonToMarkdown({ schema: successResponseContentSchema })
+      : ''
 
     const parameterMarkdownArray = Object.entries(
       endpointDetailData.parameters ?? {}
@@ -69,7 +74,7 @@ ${responseMarkdown}
 
 `
 
-    console.log(generatedMarkdown)
+    // console.log(generatedMarkdown)
 
     return generatedMarkdown
   }
