@@ -33579,10 +33579,14 @@ ${requestBodyMarkdown}
 `
         : ''}
 
+${responseMarkdown !== ''
+        ? `
 ### Response Parameters
 
 ${responseMarkdown}
-
+`
+        : ''}
+  
 `;
     // console.log(generatedMarkdown)
     return generatedMarkdown;
