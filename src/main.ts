@@ -1,8 +1,8 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
 import { stdout } from 'process'
-import { getFileFromBranch } from 'src/utils/getFileFromBranch'
-import { diffOpenapiObject } from 'src/utils/diffOpenapiObject'
+import { getFileFromBranch } from './utils/get-file-from-branch'
+import { diffOpenapiObject } from './utils/diff-openapi-object'
 
 /**
  * The main function for the action.
@@ -10,26 +10,6 @@ import { diffOpenapiObject } from 'src/utils/diffOpenapiObject'
  */
 export async function run(): Promise<void> {
   try {
-    // parse two openapi files
-    const baseBranch = process.env.GITHUB_BASE_REF!
-    const headBranch = process.env.GITHUB_HEAD_REF!
-    const filePath = './openapi.json'
-
-    const baseFile = JSON.parse(
-      getFileFromBranch(baseBranch, filePath).toString()
-    )
-    const headFile = JSON.parse(
-      getFileFromBranch(headBranch, filePath).toString()
-    )
-
-    console.log('baseFile', baseFile)
-    console.log('headFile', headFile)
-
-    const diff = diffOpenapiObject(baseFile, headFile)
-
-    console.log('diff', diff)
-    const result = JSON.stringify(diff, null, 2)
-
     const ms: string = core.getInput('milliseconds')
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
@@ -61,6 +41,26 @@ export async function run(): Promise<void> {
     // ## DELETED
     // ---
     // `
+
+    // parse two openapi files
+    const baseBranch = process.env.GITHUB_BASE_REF!
+    const headBranch = process.env.GITHUB_HEAD_REF!
+    const filePath = './openapi.json'
+
+    const baseFile = JSON.parse(
+      getFileFromBranch(baseBranch, filePath).toString()
+    )
+    const headFile = JSON.parse(
+      getFileFromBranch(headBranch, filePath).toString()
+    )
+
+    console.log('baseFile', baseFile)
+    console.log('headFile', headFile)
+
+    const diff = diffOpenapiObject(baseFile, headFile)
+
+    console.log('diff', diff)
+    const result = JSON.stringify(diff, null, 2)
 
     console.log(result)
 
