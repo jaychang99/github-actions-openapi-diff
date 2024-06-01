@@ -1,19 +1,13 @@
 import { OpenAPIV3 } from 'openapi-types'
 import { CustomPathDiffItem } from './generate-markdown-diff'
 import { SchemaObject, jsonToMarkdown } from './json-to-markdown'
-import { bold } from '../formatters/bold'
-import { table } from '@/formatters/table'
 import { responseFormatter } from '@/utils/single-api-endpoint-formatter.ts/response-formatter'
+import { requestParametersFormatter } from '@/utils/single-api-endpoint-formatter.ts/request-parameters-formatter'
 
 type FormatSingleApiEndpointAsMarkdown = (
   endpoint: CustomPathDiffItem,
   shouldCheckForChanges?: boolean
 ) => string
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isReferenceObject = (obj: any): obj is { $ref: string } => {
-  return obj.$ref !== undefined
-}
 
 const symbolByMethod: Record<CustomPathDiffItem['method'], string> = {
   get: '🟦',
@@ -25,14 +19,6 @@ const symbolByMethod: Record<CustomPathDiffItem['method'], string> = {
   head: '🔍',
   trace: '🔍'
 }
-
-const PARAMETER_TABLE_HEADERS = [
-  'Name',
-  'Required',
-  'In',
-  'Description',
-  'Example'
-]
 
 interface CustomMediaTypeObject {
   schema?: SchemaObject
@@ -71,54 +57,10 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
 
     const doesHaveRequestBody = requestBody !== undefined
 
-    const parameterTableRows: string[][] = Object.entries(
-      endpointDetailData.parameters ?? {}
-    ).map(([key, value]) => {
-      if (isReferenceObject(value)) {
-        return [key, '-', '-', '-', '-']
-      }
-
-      if (shouldCheckForChanges && baseApiEndpoint) {
-        const isAdded = Object.keys(baseApiEndpoint.parameters ?? {}).includes(
-          key
-        )
-        const isRemoved = !Object.keys(
-          endpointDetailData.parameters ?? {}
-        ).includes(key)
-        const shouldEmphasize = isAdded || isRemoved
-
-        if (shouldEmphasize) {
-          return [
-            bold(value.name),
-            bold(value.required),
-            bold(value.in),
-            bold(value.description),
-            bold(value.example)
-          ]
-        }
-
-        return [
-          value.name,
-          value.required,
-          value.in,
-          value.description,
-          value.example
-        ]
-      }
-
-      return [
-        value.name,
-        value.required,
-        value.in,
-        value.description,
-        value.example
-      ]
-    })
-
-    const doesHaveParameters = parameterTableRows.length > 0
-    const parametersMarkdownTable = table({
-      headers: PARAMETER_TABLE_HEADERS,
-      rows: parameterTableRows
+    const parametersMarkdownTable = requestParametersFormatter({
+      endpointDetailData,
+      baseApiEndpoint,
+      shouldCheckForChanges
     })
 
     const generatedMarkdown = `
@@ -128,7 +70,7 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
 - Summary: ${endpointDetailData.summary ?? 'Not Provided'}
 - Description: ${endpointDetailData.description ?? 'Not Provided'}
 
-${doesHaveParameters ? parametersMarkdownTable : ''}
+${parametersMarkdownTable}
 
 ${
   doesHaveRequestBody
