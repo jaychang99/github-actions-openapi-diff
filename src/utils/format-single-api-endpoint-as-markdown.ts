@@ -3,6 +3,7 @@ import { CustomPathDiffItem } from './generate-markdown-diff'
 import { SchemaObject, jsonToMarkdown } from './json-to-markdown'
 import { bold } from '../formatters/bold'
 import { table } from '@/formatters/table'
+import { responseFormatter } from '@/utils/single-api-endpoint-formatter.ts/response-formatter'
 
 type FormatSingleApiEndpointAsMarkdown = (
   endpoint: CustomPathDiffItem,
@@ -56,23 +57,16 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
   (endpoint, shouldCheckForChanges = false) => {
     const { url, method, endpointDetailData, baseApiEndpoint } = endpoint
     const { responses } = endpointDetailData
+
+    const responseMarkdown = responseFormatter(responses)
     const requestBody =
       endpointDetailData.requestBody as CustomRequestBodyObject // all refs have been resolved in main.ts
-    const successResponse = (responses['200'] ??
-      responses['201']) as OpenAPIV3.ResponseObject // all refs have been resolved in main.ts
-    const successResponseContent =
-      successResponse?.content?.['application/json'] ??
-      successResponse?.content?.['text/plain']
-    const successResponseContentSchema =
-      successResponseContent?.schema as SchemaObject
+
     const requestBodyMarkdown = requestBody?.content?.['application/json']
       ?.schema
       ? jsonToMarkdown({
           schema: requestBody?.content?.['application/json']?.schema
         })
-      : ''
-    const responseMarkdown = successResponseContent?.schema
-      ? jsonToMarkdown({ schema: successResponseContentSchema })
       : ''
 
     const doesHaveRequestBody = requestBody !== undefined
