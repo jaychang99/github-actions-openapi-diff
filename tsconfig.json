@@ -5,7 +5,10 @@
     "module": "NodeNext",
     "rootDir": "./src",
     "moduleResolution": "NodeNext",
-    "baseUrl": "./",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"]
+    },
     "sourceMap": true,
     "outDir": "./dist",
     "noImplicitAny": true,
