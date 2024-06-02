@@ -34,14 +34,14 @@ extends:
   - plugin:github/recommended
   - plugin:jest/recommended
 
-rules:
-  {
+rules: {
     'camelcase': 'off',
     'eslint-comments/no-use': 'off',
     'eslint-comments/no-unused-disable': 'off',
     'i18n-text/no-en': 'off',
     'import/no-namespace': 'off',
     'no-console': 'off',
+    'import/no-unresolved': 'off', # typescript will warn about this
     'no-unused-vars': 'off',
     'prettier/prettier': 'error',
     'semi': 'off',
