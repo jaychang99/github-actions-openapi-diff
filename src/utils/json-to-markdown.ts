@@ -4,12 +4,12 @@ import { OpenAPIV3 } from 'openapi-types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-export type SchemaObject = CustomArraySchemaObject | CustonNonArraySchemaObject
+export type SchemaObject = CustomArraySchemaObject | CustomNonArraySchemaObject
 interface CustomArraySchemaObject extends CustomBaseSchemaObject {
   type: OpenAPIV3.ArraySchemaObjectType
   items: SchemaObject // All refs are resolved in main.ts before calling this function
 }
-interface CustonNonArraySchemaObject extends CustomBaseSchemaObject {
+interface CustomNonArraySchemaObject extends CustomBaseSchemaObject {
   type?: OpenAPIV3.NonArraySchemaObjectType
 }
 interface CustomBaseSchemaObject {
