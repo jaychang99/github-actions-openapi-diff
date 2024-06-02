@@ -33352,6 +33352,27 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 7919:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VALID_HTTP_METHODS = void 0;
+exports.VALID_HTTP_METHODS = [
+    'get',
+    'post',
+    'put',
+    'delete',
+    'patch',
+    'options',
+    'head',
+    'trace'
+];
+
+
+/***/ }),
+
 /***/ 6037:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -33361,6 +33382,24 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.bold = void 0;
 const bold = (text) => `**${text}**`;
 exports.bold = bold;
+
+
+/***/ }),
+
+/***/ 5529:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.table = void 0;
+const table = ({ headers, rows }) => {
+    const headerRow = headers.join(' | ');
+    const headerSeparator = headers.map(() => '---').join(' | ');
+    const bodyRows = rows.map(row => row.join(' | ')).join('\n');
+    return `${headerRow}\n${headerSeparator}\n${bodyRows}`;
+};
+exports.table = table;
 
 
 /***/ }),
@@ -33400,7 +33439,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const wait_1 = __nccwpck_require__(5259);
-const process_1 = __nccwpck_require__(7282);
 const get_file_from_branch_1 = __nccwpck_require__(9340);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const http = __importStar(__nccwpck_require__(3685));
@@ -33414,28 +33452,17 @@ const resolve_refs_1 = __nccwpck_require__(4511);
 async function run() {
     try {
         const isLocal = process.env.OPENAPI_DIFF_NODE_ENV === 'local';
-        console.log('----starting in', isLocal ? 'LOCAL' : 'GITHUB', 'environment----');
+        const localEnvName = isLocal ? 'LOCAL' : 'GITHUB';
+        console.log('----starting in', localEnvName, 'environment----');
         const ms = isLocal ? '500' : core.getInput('milliseconds');
+        // TODO: delete the following after modifiying test codes.
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Waiting ${ms} milliseconds ...`);
         // Log the current timestamp, wait, then log the new timestamp
         core.debug(new Date().toTimeString());
         await (0, wait_1.wait)(parseInt(ms, 10));
         core.debug(new Date().toTimeString());
-        // Set outputs for other workflow steps to use
         core.setOutput('time', new Date().toTimeString());
-        // print to stdout
-        process_1.stdout.write('This is a single-line string\n');
-        // const result = `
-        // This is a multi-line string
-        // # API Differences
-        // ## ADDED
-        // ---
-        // ## MODIFIED
-        // ---
-        // ## DELETED
-        // ---
-        // `
         // parse two openapi files
         const baseBranch = process.env.GITHUB_BASE_REF;
         const headBranch = process.env.GITHUB_HEAD_REF;
@@ -33448,16 +33475,12 @@ async function run() {
             ? JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-head.json').toString() // testing file in local env
             )
             : JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headBranch, filePath).toString());
-        // console.log('baseFile', baseFile)
-        // console.log('headFile', headFile)
+        // resolve all refs. openapi.json has references to other properties, so we need to resolve them
         const refResolvedBaseFile = (0, resolve_refs_1.resolveRefs)(baseFile, baseFile);
         const refResolvedHeadFile = (0, resolve_refs_1.resolveRefs)(headFile, headFile);
-        // const diff = diffOpenapiObject(refResolvedBaseFile, refResolvedHeadFile)
         const markdownDiff = (0, generate_markdown_diff_1.generateMarkdownDiff)(refResolvedBaseFile, refResolvedHeadFile);
-        // console.log('diff', diff)
-        // const result = JSON.stringify(diff, null, 2)
-        // console.log(result)
         if (!isLocal) {
+            // Set outputs for other workflow steps to use
             core.setOutput('result', markdownDiff);
         }
         if (isLocal) {
@@ -33493,6 +33516,76 @@ exports.run = run;
 
 /***/ }),
 
+/***/ 9080:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.classifyAddedModifiedRemovedEndpoints = void 0;
+const valid_http_methods_1 = __nccwpck_require__(7919);
+const classifyAddedModifiedRemovedEndpoints = ({ startOpenapiObj, targetOpenapiObj }) => {
+    const startPaths = startOpenapiObj.paths;
+    const targetPaths = targetOpenapiObj.paths;
+    const addedEndpoints = [];
+    const removedEndpoints = [];
+    const modifiedEndpoints = [];
+    // find added or modified endpoints
+    for (const [path, value] of Object.entries(targetPaths)) {
+        if (!value)
+            continue; // if path is empty, skip
+        for (const [method, endpointDetailData] of Object.entries(value)) {
+            // if it is not about HTTP method, skip
+            if (!valid_http_methods_1.VALID_HTTP_METHODS.includes(method))
+                continue;
+            const startEndpointData = startPaths?.[path]?.[method];
+            // if endpoint does not exist in start, it is added
+            if (!startEndpointData) {
+                addedEndpoints.push({
+                    url: path,
+                    method: method,
+                    endpointDetailData: endpointDetailData
+                });
+                continue;
+            }
+            // if endpoint exists in start, but the content is different, it is modified
+            if (JSON.stringify(startEndpointData) !==
+                JSON.stringify(endpointDetailData)) {
+                modifiedEndpoints.push({
+                    url: path,
+                    method: method,
+                    endpointDetailData: endpointDetailData,
+                    baseApiEndpoint: startEndpointData
+                });
+            }
+        }
+    }
+    // find removed endpoints
+    for (const [path, value] of Object.entries(startPaths)) {
+        if (!value)
+            continue; // if path is empty, skip
+        for (const [method, endpointDetailData] of Object.entries(value)) {
+            // if it is not about HTTP method, skip
+            if (!valid_http_methods_1.VALID_HTTP_METHODS.includes(method))
+                continue;
+            const targetEndpointData = targetPaths?.[path]?.[method];
+            // if endpoint does not exist in target, it is removed
+            if (!targetEndpointData) {
+                removedEndpoints.push({
+                    url: path,
+                    method: method,
+                    endpointDetailData: endpointDetailData
+                });
+            }
+        }
+    }
+    return { addedEndpoints, modifiedEndpoints, removedEndpoints };
+};
+exports.classifyAddedModifiedRemovedEndpoints = classifyAddedModifiedRemovedEndpoints;
+
+
+/***/ }),
+
 /***/ 5676:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -33500,12 +33593,9 @@ exports.run = run;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.formatSingleApiEndpointAsMarkdown = void 0;
-const json_to_markdown_1 = __nccwpck_require__(7908);
-const bold_1 = __nccwpck_require__(6037);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isReferenceObject = (obj) => {
-    return obj.$ref !== undefined;
-};
+const response_formatter_1 = __nccwpck_require__(6782);
+const request_parameters_formatter_1 = __nccwpck_require__(4154);
+const request_body_formatter_1 = __nccwpck_require__(5996);
 const symbolByMethod = {
     get: '🟦',
     post: '🟩',
@@ -33519,38 +33609,15 @@ const symbolByMethod = {
 const formatSingleApiEndpointAsMarkdown = (endpoint, shouldCheckForChanges = false) => {
     const { url, method, endpointDetailData, baseApiEndpoint } = endpoint;
     const { responses } = endpointDetailData;
-    const requestBody = endpointDetailData.requestBody; // all refs have been resolved in main.ts
-    const successResponse = (responses['200'] ??
-        responses['201']); // all refs have been resolved in main.ts
-    const successResponseContent = successResponse?.content?.['application/json'] ??
-        successResponse?.content?.['text/plain'];
-    const successResponseContentSchema = successResponseContent?.schema;
-    const requestBodyMarkdown = requestBody?.content?.['application/json']
-        ?.schema
-        ? (0, json_to_markdown_1.jsonToMarkdown)({
-            schema: requestBody?.content?.['application/json']?.schema
-        })
-        : '';
-    const responseMarkdown = successResponseContent?.schema
-        ? (0, json_to_markdown_1.jsonToMarkdown)({ schema: successResponseContentSchema })
-        : '';
-    const doesHaveRequestBody = requestBody !== undefined;
-    const parameterMarkdownArray = Object.entries(endpointDetailData.parameters ?? {}).map(([key, value]) => {
-        if (isReferenceObject(value)) {
-            return `| ${key} | - | - | - | - |`;
-        }
-        if (shouldCheckForChanges && baseApiEndpoint) {
-            const isAdded = Object.keys(baseApiEndpoint.parameters ?? {}).includes(key);
-            const isRemoved = !Object.keys(endpointDetailData.parameters ?? {}).includes(key);
-            const shouldEmphasize = isAdded || isRemoved;
-            if (shouldEmphasize) {
-                return `| ${(0, bold_1.bold)(value.name)} ${isAdded ? '➕✅' : ''}${isRemoved ? '➖❌' : ''} | ${(0, bold_1.bold)(value.required)} | ${(0, bold_1.bold)(value.in)} | ${(0, bold_1.bold)(value.description)} | ${(0, bold_1.bold)(value.example)} |`;
-            }
-            return `| ${value.name} | ${value.required} | ${value.in} | ${value.description} | ${value.example} |`;
-        }
-        return `| ${value.name} | ${value.required} | ${value.in} | ${value.description} | ${value.example} |`;
+    const parametersMarkdownTable = (0, request_parameters_formatter_1.requestParametersFormatter)({
+        endpointDetailData,
+        baseApiEndpoint,
+        shouldCheckForChanges
     });
-    const doesHaveParameters = parameterMarkdownArray.length > 0;
+    const requestBodyMarkdown = (0, request_body_formatter_1.requestBodyFormatter)({
+        endpointDetailData
+    });
+    const responseMarkdown = (0, response_formatter_1.responseFormatter)(responses);
     const generatedMarkdown = `
 ---
 ## ${symbolByMethod[method]} ${method.toUpperCase()}: ${url}
@@ -33558,26 +33625,9 @@ const formatSingleApiEndpointAsMarkdown = (endpoint, shouldCheckForChanges = fal
 - Summary: ${endpointDetailData.summary ?? 'Not Provided'}
 - Description: ${endpointDetailData.description ?? 'Not Provided'}
 
-${doesHaveParameters
-        ? `
-### Request Parameters
-| Name | Required | In | Description | Example |
-| ---- | -------- | -- | ----------- | ------- |
-${parameterMarkdownArray.join('\n')}
-`
-        : ''}
-
-${doesHaveRequestBody
-        ? `
-### Request Body
-- Content-Type: ${Object.keys(requestBody.content)[0] ?? 'Not Provided'}
-- Description: ${requestBody?.description ?? 'Not Provided'}
-- Example: ${requestBody?.content?.['application/json']?.example ?? 'Not Provided'}
-- Content Required: ${requestBody?.required ?? 'Not Provided'}
+${parametersMarkdownTable}
 
 ${requestBodyMarkdown}
-`
-        : ''}
 
 ${responseMarkdown !== ''
         ? `
@@ -33604,18 +33654,12 @@ exports.formatSingleApiEndpointAsMarkdown = formatSingleApiEndpointAsMarkdown;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateMarkdownDiff = void 0;
 const format_single_api_endpoint_as_markdown_1 = __nccwpck_require__(5676);
+const classify_added_modified_removed_endpoints_1 = __nccwpck_require__(9080);
 const generateMarkdownDiff = (startOpenapiObj, targetOpenapiObj) => {
-    const start = startOpenapiObj;
-    const target = targetOpenapiObj;
-    // console.log(Object.entries(target.paths))
-    const addedEndpoints = [];
-    const removedEndpoints = [];
-    const modifiedEndpoints = [];
-    compareTwoOpenApiPaths(start, target, addedEndpoints);
-    compareTwoOpenApiPaths(target, start, removedEndpoints);
-    compareTwoOpenApiPaths(start, target, modifiedEndpoints, true);
-    // console.log(addedEndpoints)
-    // console.log(removedEndpoints)
+    const { addedEndpoints, modifiedEndpoints, removedEndpoints } = (0, classify_added_modified_removed_endpoints_1.classifyAddedModifiedRemovedEndpoints)({
+        startOpenapiObj,
+        targetOpenapiObj
+    });
     const addedEndpointsMarkdown = addedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
@@ -33641,50 +33685,6 @@ ${removedEndpointsMarkdown.join('\n')}
 `;
 };
 exports.generateMarkdownDiff = generateMarkdownDiff;
-const compareTwoOpenApiPaths = (from, to, resultArray, shouldCheckForChanges = false) => {
-    const checkNeededMethods = [
-        'get',
-        'post',
-        'put',
-        'delete',
-        'patch'
-    ];
-    for (const pathAndInfoArr of Object.entries(to.paths)) {
-        const path = pathAndInfoArr[0];
-        const pathItemObjWithAllMethods = pathAndInfoArr[1];
-        for (const method of checkNeededMethods) {
-            const item = pathItemObjWithAllMethods?.[method];
-            if (item) {
-                const doesEndpointExistInStart = from.paths[path];
-                if (!doesEndpointExistInStart && !shouldCheckForChanges) {
-                    resultArray.push({
-                        url: path,
-                        method,
-                        endpointDetailData: item
-                    });
-                }
-                else {
-                    if (shouldCheckForChanges) {
-                        // method + url exists in both start and target
-                        // check for any changes
-                        const startItem = doesEndpointExistInStart?.[method];
-                        if (startItem) {
-                            if (JSON.stringify(startItem) !== JSON.stringify(item)) {
-                                console.log('startItem', startItem);
-                                resultArray.push({
-                                    url: path,
-                                    method,
-                                    endpointDetailData: item,
-                                    baseApiEndpoint: startItem
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-};
 
 
 /***/ }),
@@ -33794,6 +33794,129 @@ function resolveRefs(obj, root) {
     return obj;
 }
 exports.resolveRefs = resolveRefs;
+
+
+/***/ }),
+
+/***/ 5996:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.requestBodyFormatter = void 0;
+const json_to_markdown_1 = __nccwpck_require__(7908);
+const requestBodyFormatter = ({ endpointDetailData }) => {
+    const requestBody = endpointDetailData.requestBody; // all refs have been resolved in main.ts
+    const doesHaveRequestBody = requestBody !== undefined;
+    if (!doesHaveRequestBody) {
+        return '';
+    }
+    const requestBodyAdditionalInfo = `
+### Request Body
+- Content-Type: ${Object.keys(requestBody.content)[0] ?? 'Not Provided'}
+- Description: ${requestBody?.description ?? 'Not Provided'}
+- Example: ${requestBody?.content?.['application/json']?.example ?? 'Not Provided'}
+- Content Required: ${requestBody?.required ?? 'Not Provided'}
+`;
+    const requestBodyMarkdown = requestBody?.content?.['application/json']?.schema
+        ? (0, json_to_markdown_1.jsonToMarkdown)({
+            schema: requestBody?.content?.['application/json']?.schema
+        })
+        : '';
+    return requestBodyAdditionalInfo + requestBodyMarkdown;
+};
+exports.requestBodyFormatter = requestBodyFormatter;
+
+
+/***/ }),
+
+/***/ 4154:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.requestParametersFormatter = void 0;
+const bold_1 = __nccwpck_require__(6037);
+const table_1 = __nccwpck_require__(5529);
+const PARAMETER_TABLE_HEADERS = [
+    'Name',
+    'Required',
+    'In',
+    'Description',
+    'Example'
+];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isReferenceObject = (obj) => {
+    return obj.$ref !== undefined;
+};
+const requestParametersFormatter = ({ endpointDetailData, baseApiEndpoint, shouldCheckForChanges = false }) => {
+    const parameterTableRows = Object.entries(endpointDetailData.parameters ?? {}).map(([key, value]) => {
+        if (isReferenceObject(value)) {
+            return [key, '-', '-', '-', '-'];
+        }
+        if (shouldCheckForChanges && baseApiEndpoint) {
+            const isAdded = Object.keys(baseApiEndpoint.parameters ?? {}).includes(key);
+            const isRemoved = !Object.keys(endpointDetailData.parameters ?? {}).includes(key);
+            const shouldEmphasize = isAdded || isRemoved;
+            if (shouldEmphasize) {
+                return [
+                    (0, bold_1.bold)(value.name),
+                    (0, bold_1.bold)(value.required),
+                    (0, bold_1.bold)(value.in),
+                    (0, bold_1.bold)(value.description),
+                    (0, bold_1.bold)(value.example)
+                ];
+            }
+            return [
+                value.name,
+                value.required,
+                value.in,
+                value.description,
+                value.example
+            ];
+        }
+        return [
+            value.name,
+            value.required,
+            value.in,
+            value.description,
+            value.example
+        ];
+    });
+    const parametersMarkdownTable = (0, table_1.table)({
+        headers: PARAMETER_TABLE_HEADERS,
+        rows: parameterTableRows
+    });
+    const doesHaveParameters = parameterTableRows.length > 0;
+    return doesHaveParameters ? parametersMarkdownTable : '';
+};
+exports.requestParametersFormatter = requestParametersFormatter;
+
+
+/***/ }),
+
+/***/ 6782:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.responseFormatter = void 0;
+const json_to_markdown_1 = __nccwpck_require__(7908);
+const responseFormatter = responses => {
+    const successResponse = (responses['200'] ??
+        responses['201']); // all refs have been resolved in main.ts
+    const successResponseContent = successResponse?.content?.['application/json'] ??
+        successResponse?.content?.['text/plain'];
+    const successResponseContentSchema = successResponseContent?.schema;
+    const responseMarkdown = successResponseContent?.schema
+        ? (0, json_to_markdown_1.jsonToMarkdown)({ schema: successResponseContentSchema })
+        : '';
+    return responseMarkdown;
+};
+exports.responseFormatter = responseFormatter;
 
 
 /***/ }),
@@ -33972,14 +34095,6 @@ module.exports = require("path");
 
 "use strict";
 module.exports = require("perf_hooks");
-
-/***/ }),
-
-/***/ 7282:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("process");
 
 /***/ }),
 
