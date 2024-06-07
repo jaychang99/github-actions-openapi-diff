@@ -1,4 +1,5 @@
-import { SchemaObject, jsonToMarkdown } from '@/utils/json-to-markdown'
+import { SchemaObject } from '@/utils/json-to-markdown'
+import { jsonToMarkdownTable } from '@/utils/json-to-markdown-table'
 import { OpenAPIV3 } from 'openapi-types'
 
 export type RequestBodyFormatter = (args: {
@@ -43,7 +44,7 @@ export const requestBodyFormatter: RequestBodyFormatter = ({
 `
 
   const requestBodyMarkdown = requestBody?.content?.['application/json']?.schema
-    ? jsonToMarkdown({
+    ? jsonToMarkdownTable({
         schema: requestBody?.content?.['application/json']?.schema
       })
     : ''

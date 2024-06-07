@@ -59,7 +59,9 @@ export type SingleReponseObj = {
 
 // recursively format nested objects until obj.type is not 'object' , 'array' , null or undefined
 // WRITE YOUR CODE HERE
-
+/**
+ * @deprecated use jsonToMarkdownTable instead
+ */
 export function jsonToMarkdown(obj: SingleReponseObj): string {
   const isArray = obj.schema.type === 'array'
   const properties =

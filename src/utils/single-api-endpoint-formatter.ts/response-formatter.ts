@@ -1,4 +1,5 @@
-import { SchemaObject, jsonToMarkdown } from '@/utils/json-to-markdown'
+import { SchemaObject } from '@/utils/json-to-markdown'
+import { jsonToMarkdownTable } from '@/utils/json-to-markdown-table'
 import { OpenAPIV3 } from 'openapi-types'
 
 type ResponseFormatter = (responses: OpenAPIV3.ResponsesObject) => string
@@ -15,7 +16,7 @@ export const responseFormatter: ResponseFormatter = responses => {
     successResponseContent?.schema as SchemaObject
 
   const responseMarkdown = successResponseContent?.schema
-    ? jsonToMarkdown({ schema: successResponseContentSchema })
+    ? jsonToMarkdownTable({ schema: successResponseContentSchema })
     : ''
 
   return responseMarkdown
