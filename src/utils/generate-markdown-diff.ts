@@ -42,6 +42,10 @@ export const generateMarkdownDiff: GenerateMarkdownDiff = (
     return formatSingleApiEndpointAsMarkdown(endpoint)
   })
 
+  if (!hasAddedEndpoints && !hasModifiedEndpoints && !hasRemovedEndpoints) {
+    return 'No API changes detected'
+  }
+
   return `
 ${
   hasAddedEndpoints

@@ -33696,6 +33696,9 @@ const generateMarkdownDiff = (startOpenapiObj, targetOpenapiObj) => {
     const removedEndpointsMarkdown = removedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
+    if (!hasAddedEndpoints && !hasModifiedEndpoints && !hasRemovedEndpoints) {
+        return 'No API changes detected';
+    }
     return `
 ${hasAddedEndpoints
         ? `
