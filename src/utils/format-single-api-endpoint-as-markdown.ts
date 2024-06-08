@@ -1,7 +1,10 @@
 import { CustomPathDiffItem } from './generate-markdown-diff'
 import { responseFormatter } from '@/utils/single-api-endpoint-formatter.ts/response-formatter'
 import { requestParametersFormatter } from '@/utils/single-api-endpoint-formatter.ts/request-parameters-formatter'
-import { requestBodyFormatter } from '@/utils/single-api-endpoint-formatter.ts/request-body-formatter'
+import {
+  CustomRequestBodyObject,
+  requestBodyFormatter
+} from '@/utils/single-api-endpoint-formatter.ts/request-body-formatter'
 
 type FormatSingleApiEndpointAsMarkdown = (
   endpoint: CustomPathDiffItem,
@@ -30,7 +33,8 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
       shouldCheckForChanges
     })
     const requestBodyMarkdown = requestBodyFormatter({
-      endpointDetailData
+      endpointDetailData,
+      baseRequestBody: baseApiEndpoint?.requestBody as CustomRequestBodyObject
     })
     const responseMarkdown = responseFormatter(
       responses,
