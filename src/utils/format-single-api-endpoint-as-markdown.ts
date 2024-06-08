@@ -32,7 +32,10 @@ export const formatSingleApiEndpointAsMarkdown: FormatSingleApiEndpointAsMarkdow
     const requestBodyMarkdown = requestBodyFormatter({
       endpointDetailData
     })
-    const responseMarkdown = responseFormatter(responses)
+    const responseMarkdown = responseFormatter(
+      responses,
+      baseApiEndpoint?.responses
+    )
 
     const generatedMarkdown = `
 ---

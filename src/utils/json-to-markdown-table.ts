@@ -1,6 +1,4 @@
-// Utility function to format JSON as Markdown code block
-
-import { table } from '@/formatters/table'
+import { tableFromObject } from '@/formatters/table-from-object'
 import { Markdown } from '@/utils/markdown/markdown'
 import { OpenAPIV3 } from 'openapi-types'
 
@@ -59,22 +57,81 @@ export type SingleReponseObj = {
   schema: SchemaObject
 }
 
+type JsonRowItem = {
+  property: string
+  type: string
+  required: string
+  description: string
+  example: string
+}
+
+const recursivelyFormatNestedObjects = (
+  schema: SchemaObject,
+  fromArray?: boolean
+): JsonRowItem[] => {
+  const rows: JsonRowItem[] = []
+
+  if (schema.type === 'array') {
+    // console.log('schema', schema)
+    const row: JsonRowItem = {
+      property: `[]`,
+      type: schema.type ?? '',
+      required: '-',
+      description: schema.description ?? '',
+      example: schema.example ?? ''
+    }
+
+    rows.push(row)
+
+    if (schema.items.properties) {
+      const nestedRows = recursivelyFormatNestedObjects(schema.items, true)
+      rows.push(...nestedRows)
+    }
+  } else {
+    if (schema.properties) {
+      for (const [propertyName, propertyMetadata] of Object.entries(
+        schema.properties
+      )) {
+        const row: JsonRowItem = {
+          property: `${fromArray ? '[].' : ''}${propertyName}`,
+          type: propertyMetadata.type ?? '',
+          required: schema.required?.includes(propertyName) ? 'Yes' : 'No',
+          description: propertyMetadata.description ?? '',
+          example: propertyMetadata.example ?? ''
+        }
+
+        rows.push(row)
+
+        if (propertyMetadata.properties) {
+          const nestedRows = recursivelyFormatNestedObjects(propertyMetadata)
+          rows.push(...nestedRows)
+        }
+      }
+    }
+  }
+
+  return rows
+}
+
 export function jsonToMarkdownTable(obj: SingleReponseObj): string {
   const mdc = new Markdown()
 
   const headers = ['Property', 'Type', 'Required', 'Description', 'Example']
 
-  const rows = Object.entries(obj.schema.properties ?? {}).map(
-    ([propertyName, propertyMetadata]) => [
-      propertyName,
-      propertyMetadata.type,
-      obj.schema.required?.includes(propertyName) ? 'Yes' : 'No',
-      propertyMetadata.description ?? '',
-      propertyMetadata.example ?? ''
-    ]
-  )
+  // const rows = Object.entries(obj.schema.properties ?? {}).map(
+  //   ([propertyName, propertyMetadata]) => [
+  //     propertyName,
+  //     propertyMetadata.type,
+  //     obj.schema.required?.includes(propertyName) ? 'Yes' : 'No',
+  //     propertyMetadata.description ?? '',
+  //     propertyMetadata.example ?? ''
+  //   ]
+  // )
 
-  const tableMarkdown = table({ headers, rows })
+  const rows = recursivelyFormatNestedObjects(obj.schema)
+  const dataIndex = headers.map(header => header.toLowerCase())
+
+  const tableMarkdown = tableFromObject({ headers, rows, dataIndex })
 
   mdc.appendToNewLine(tableMarkdown)
 
