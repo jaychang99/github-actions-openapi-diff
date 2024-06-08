@@ -14,6 +14,8 @@ export type GenerateMarkdownDiff = (
   targetOpenapiObj: OpenapiTypes
 ) => string
 
+const isEmptyArray = <T>(arr: T[]): boolean => arr.length === 0
+
 export const generateMarkdownDiff: GenerateMarkdownDiff = (
   startOpenapiObj,
   targetOpenapiObj
@@ -23,6 +25,10 @@ export const generateMarkdownDiff: GenerateMarkdownDiff = (
       startOpenapiObj,
       targetOpenapiObj
     })
+
+  const hasAddedEndpoints = !isEmptyArray(addedEndpoints)
+  const hasModifiedEndpoints = !isEmptyArray(modifiedEndpoints)
+  const hasRemovedEndpoints = !isEmptyArray(removedEndpoints)
 
   const addedEndpointsMarkdown = addedEndpoints.map(endpoint => {
     return formatSingleApiEndpointAsMarkdown(endpoint)
@@ -36,18 +42,41 @@ export const generateMarkdownDiff: GenerateMarkdownDiff = (
     return formatSingleApiEndpointAsMarkdown(endpoint)
   })
 
+  if (!hasAddedEndpoints && !hasModifiedEndpoints && !hasRemovedEndpoints) {
+    return 'No API changes detected'
+  }
+
   return `
+${
+  hasAddedEndpoints
+    ? `
 # 🆕✅ Added Endpoints 
 ---
 ${addedEndpointsMarkdown.join('\n')}
+`
+    : ''
+}
 
+${
+  hasModifiedEndpoints
+    ? `
+  
 # 🔄⚠️ Modified Endpoints
 ---
-
+  
 ${modifiedEndpointsMarkdown.join('\n')}
-
+`
+    : ''
+}
+  
+${
+  hasRemovedEndpoints
+    ? `
 # 🗑❌ Removed Endpoints 
 ---
 ${removedEndpointsMarkdown.join('\n')}
+`
+    : ''
+}
 `
 }

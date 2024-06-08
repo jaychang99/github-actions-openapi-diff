@@ -13,7 +13,7 @@ A Workflow that runs on pull requests and diffs any api changes based on
 
 ```bash
 npm install
-npm run package:local # This compiles ts files and watches for changes
+npm run package:watch:local # This compiles ts files and watches for changes
 npm run dev:nodemon # This starts a local development server on localhost:5050
 ```
 

@@ -33386,6 +33386,28 @@ exports.bold = bold;
 
 /***/ }),
 
+/***/ 8484:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.tableFromObject = void 0;
+const tableFromObject = ({ headers, dataIndex, rows }) => {
+    const headerRow = headers.join(' | ');
+    const headerSeparator = headers.map(() => '---').join(' | ');
+    const bodyRows = rows
+        .map(row => {
+        return dataIndex.map(index => row[index]).join(' | ');
+    })
+        .join('\n');
+    return `${headerRow}\n${headerSeparator}\n${bodyRows}`;
+};
+exports.tableFromObject = tableFromObject;
+
+
+/***/ }),
+
 /***/ 5529:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -33615,9 +33637,10 @@ const formatSingleApiEndpointAsMarkdown = (endpoint, shouldCheckForChanges = fal
         shouldCheckForChanges
     });
     const requestBodyMarkdown = (0, request_body_formatter_1.requestBodyFormatter)({
-        endpointDetailData
+        endpointDetailData,
+        baseRequestBody: baseApiEndpoint?.requestBody
     });
-    const responseMarkdown = (0, response_formatter_1.responseFormatter)(responses);
+    const responseMarkdown = (0, response_formatter_1.responseFormatter)(responses, baseApiEndpoint?.responses);
     const generatedMarkdown = `
 ---
 ## ${symbolByMethod[method]} ${method.toUpperCase()}: ${url}
@@ -33655,11 +33678,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateMarkdownDiff = void 0;
 const format_single_api_endpoint_as_markdown_1 = __nccwpck_require__(5676);
 const classify_added_modified_removed_endpoints_1 = __nccwpck_require__(9080);
+const isEmptyArray = (arr) => arr.length === 0;
 const generateMarkdownDiff = (startOpenapiObj, targetOpenapiObj) => {
     const { addedEndpoints, modifiedEndpoints, removedEndpoints } = (0, classify_added_modified_removed_endpoints_1.classifyAddedModifiedRemovedEndpoints)({
         startOpenapiObj,
         targetOpenapiObj
     });
+    const hasAddedEndpoints = !isEmptyArray(addedEndpoints);
+    const hasModifiedEndpoints = !isEmptyArray(modifiedEndpoints);
+    const hasRemovedEndpoints = !isEmptyArray(removedEndpoints);
     const addedEndpointsMarkdown = addedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
@@ -33669,19 +33696,35 @@ const generateMarkdownDiff = (startOpenapiObj, targetOpenapiObj) => {
     const removedEndpointsMarkdown = removedEndpoints.map(endpoint => {
         return (0, format_single_api_endpoint_as_markdown_1.formatSingleApiEndpointAsMarkdown)(endpoint);
     });
+    if (!hasAddedEndpoints && !hasModifiedEndpoints && !hasRemovedEndpoints) {
+        return 'No API changes detected';
+    }
     return `
+${hasAddedEndpoints
+        ? `
 # 🆕✅ Added Endpoints 
 ---
 ${addedEndpointsMarkdown.join('\n')}
+`
+        : ''}
 
+${hasModifiedEndpoints
+        ? `
+  
 # 🔄⚠️ Modified Endpoints
 ---
-
+  
 ${modifiedEndpointsMarkdown.join('\n')}
-
+`
+        : ''}
+  
+${hasRemovedEndpoints
+        ? `
 # 🗑❌ Removed Endpoints 
 ---
 ${removedEndpointsMarkdown.join('\n')}
+`
+        : ''}
 `;
 };
 exports.generateMarkdownDiff = generateMarkdownDiff;
@@ -33708,56 +33751,98 @@ exports.getFileFromBranch = getFileFromBranch;
 
 /***/ }),
 
-/***/ 7908:
+/***/ 3779:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
-// Utility function to format JSON as Markdown code block
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.jsonToMarkdown = void 0;
-// recursively format nested objects until obj.type is not 'object' , 'array' , null or undefined
-// WRITE YOUR CODE HERE
-function jsonToMarkdown(obj) {
-    const isArray = obj.schema.type === 'array';
-    const properties = obj.schema.type === 'array'
-        ? obj.schema.items?.properties
-        : obj.schema.properties;
-    if (!properties)
-        return '';
-    let md = '```markdown\n';
-    if (isArray)
-        md += '[\n';
-    const requiredArray = obj.schema.required;
-    for (const property of Object.entries(properties)) {
-        const [propertyName, propertyMetadata] = property;
-        const nullableMark = propertyMetadata.nullable ? 'NULLABLE 🚨' : '';
-        const nullableQuestionMark = propertyMetadata.nullable ? '?' : '';
-        const requiredMark = requiredArray && requiredArray.includes(propertyName) ? 'REQUIRED 🔥' : '';
-        md += `${propertyName}${nullableQuestionMark} : ${propertyMetadata.type}; ${nullableMark}${requiredMark} \n📎${propertyMetadata.description ?? 'Description Not Provided'} \n📚EX) ${propertyMetadata.example ?? 'Example Not Provided'} \n\n`;
-        if (propertyMetadata.type === 'array') {
-            const items = propertyMetadata.items?.properties;
-            if (!items)
-                continue;
-            if (propertyMetadata.type === 'array')
-                md += '  [\n';
-            for (const item of Object.entries(items)) {
-                const [itemName, itemMetadata] = item;
-                const nullableMarkSub = itemMetadata.nullable ? 'NULLABLE 🚨' : '';
-                const nullableQuestionMarkSub = itemMetadata.nullable ? '?' : '';
-                const indent = isArray ? '    ' : '';
-                md += `${indent}${itemName}${nullableQuestionMarkSub} : ${itemMetadata.type}; ${nullableMarkSub} \n${indent}📎${itemMetadata.description ?? 'Description Not Provided'} \n${indent}📚EX) ${itemMetadata.example ?? 'Example Not Provided'} \n\n`;
-            }
-            if (propertyMetadata.type === 'array')
-                md += '  ]\n';
+exports.getflattenedSchema = void 0;
+const recursivelyFormatNestedObjects = (schema, rows = [], iteration = 0, previousPropertyPrefix = '') => {
+    console.log('iteration: ', iteration);
+    console.table(rows);
+    console.log('schema', schema);
+    const isInitialIteration = iteration === 0;
+    const conditionalPropertyPrefix = isInitialIteration ? '' : '.';
+    if (schema.type === 'array') {
+        const row = {
+            property: `${previousPropertyPrefix}${conditionalPropertyPrefix}[]`,
+            type: schema.type ?? '',
+            required: '-',
+            description: schema.description ?? '',
+            example: schema.example ?? ''
+        };
+        rows.push(row);
+        if (schema.items.properties) {
+            recursivelyFormatNestedObjects(schema.items, rows, iteration + 1, row.property);
+        }
+        else {
+            return rows;
         }
     }
-    if (isArray)
-        md += ']\n';
-    md += '```';
-    return md;
+    else {
+        if (schema.properties) {
+            for (const [propertyName, propertyMetadata] of Object.entries(schema.properties)) {
+                const arrayPrefix = propertyMetadata.type === 'array' ? '.[]' : '';
+                const row = {
+                    property: `${previousPropertyPrefix}${conditionalPropertyPrefix}${propertyName}`,
+                    type: propertyMetadata.type ?? '',
+                    required: schema.required?.includes(propertyName) ? 'Yes' : 'No',
+                    description: propertyMetadata.description ?? '',
+                    example: propertyMetadata.example ?? ''
+                };
+                rows.push(row);
+                console.table(rows);
+                if (propertyMetadata.properties) {
+                    recursivelyFormatNestedObjects(propertyMetadata, rows, iteration + 1);
+                }
+                if (propertyMetadata.type === 'array') {
+                    recursivelyFormatNestedObjects(propertyMetadata.items, rows, iteration + 1, row.property + arrayPrefix);
+                }
+            }
+        }
+        else {
+            return rows;
+        }
+    }
+    console.log('==right before return rows==');
+    console.table(rows);
+    return rows;
+};
+const getflattenedSchema = (singleResponseObjSchema) => {
+    const initialRows = [];
+    const rows = recursivelyFormatNestedObjects(singleResponseObjSchema, initialRows, 0);
+    // console.log('rows', rows)
+    return rows;
+};
+exports.getflattenedSchema = getflattenedSchema;
+
+
+/***/ }),
+
+/***/ 2025:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Markdown = void 0;
+class Markdown {
+    markdown;
+    constructor() {
+        this.markdown = '';
+    }
+    append(markdown) {
+        this.markdown += markdown;
+    }
+    appendToNewLine(markdown) {
+        this.markdown += `\n${markdown}`;
+    }
+    toString() {
+        return this.markdown;
+    }
 }
-exports.jsonToMarkdown = jsonToMarkdown;
+exports.Markdown = Markdown;
 
 
 /***/ }),
@@ -33805,9 +33890,24 @@ exports.resolveRefs = resolveRefs;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.requestBodyFormatter = void 0;
-const json_to_markdown_1 = __nccwpck_require__(7908);
-const requestBodyFormatter = ({ endpointDetailData }) => {
+const table_from_object_1 = __nccwpck_require__(8484);
+const get_flattened_schema_1 = __nccwpck_require__(3779);
+const markdown_1 = __nccwpck_require__(2025);
+const requestBodyFormatter = ({ endpointDetailData, baseRequestBody // only used for modified endpoints
+ }) => {
+    let flattenedRequestBody = [];
+    let flattenedBaseRequestBody = [];
+    if (baseRequestBody) {
+        const resolvedBaseRequestBody = baseRequestBody;
+        const baseRequestBodyContent = resolvedBaseRequestBody?.content?.['application/json'] ??
+            resolvedBaseRequestBody?.content?.['text/plain'];
+        const baseRequestBodyContentSchema = baseRequestBodyContent?.schema;
+        flattenedBaseRequestBody = (0, get_flattened_schema_1.getflattenedSchema)(baseRequestBodyContentSchema);
+    }
     const requestBody = endpointDetailData.requestBody; // all refs have been resolved in main.ts
+    flattenedRequestBody = requestBody.content['application/json'].schema
+        ? (0, get_flattened_schema_1.getflattenedSchema)(requestBody.content['application/json'].schema)
+        : [];
     const doesHaveRequestBody = requestBody !== undefined;
     if (!doesHaveRequestBody) {
         return '';
@@ -33819,10 +33919,34 @@ const requestBodyFormatter = ({ endpointDetailData }) => {
 - Example: ${requestBody?.content?.['application/json']?.example ?? 'Not Provided'}
 - Content Required: ${requestBody?.required ?? 'Not Provided'}
 `;
+    const mdc = new markdown_1.Markdown();
+    const headers = ['Property', 'Type', 'Required', 'Description', 'Example'];
+    // const rows = Object.entries(obj.schema.properties ?? {}).map(
+    //   ([propertyName, propertyMetadata]) => [
+    //     propertyName,
+    //     propertyMetadata.type,
+    //     obj.schema.required?.includes(propertyName) ? 'Yes' : 'No',
+    //     propertyMetadata.description ?? '',
+    //     propertyMetadata.example ?? ''
+    //   ]
+    // )
+    const baseFlattenedSchemaPropertyList = flattenedBaseRequestBody?.map(row => row.property);
+    const rowsFromNewBody = flattenedRequestBody.map(row => {
+        const hasBeenAdded = !baseFlattenedSchemaPropertyList.includes(row.property);
+        return {
+            property: `${hasBeenAdded ? '✅' : ''} ${row.property}`,
+            type: row.type,
+            required: row.required,
+            description: row.description,
+            example: row.example
+        };
+    });
+    const rows = [...rowsFromNewBody];
+    const dataIndex = headers.map(header => header.toLowerCase());
+    const tableMarkdown = (0, table_from_object_1.tableFromObject)({ headers, rows, dataIndex });
+    mdc.appendToNewLine(tableMarkdown);
     const requestBodyMarkdown = requestBody?.content?.['application/json']?.schema
-        ? (0, json_to_markdown_1.jsonToMarkdown)({
-            schema: requestBody?.content?.['application/json']?.schema
-        })
+        ? mdc.toString()
         : '';
     return requestBodyAdditionalInfo + requestBodyMarkdown;
 };
@@ -33904,16 +34028,56 @@ exports.requestParametersFormatter = requestParametersFormatter;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.responseFormatter = void 0;
-const json_to_markdown_1 = __nccwpck_require__(7908);
-const responseFormatter = responses => {
+const table_from_object_1 = __nccwpck_require__(8484);
+const get_flattened_schema_1 = __nccwpck_require__(3779);
+const markdown_1 = __nccwpck_require__(2025);
+const responseFormatter = (responses, baseResponse) => {
+    let flattenedResponse = [];
+    let flattenedBaseResponse = [];
+    if (baseResponse) {
+        const successBaseReponse = (baseResponse['200'] ??
+            baseResponse['201']); // all refs have been resolved in main.ts
+        const successBaseResponseContent = successBaseReponse?.content?.['application/json'] ??
+            successBaseReponse?.content?.['text/plain'];
+        const successBaseResponseContentSchema = successBaseResponseContent?.schema;
+        flattenedBaseResponse = (0, get_flattened_schema_1.getflattenedSchema)(successBaseResponseContentSchema);
+    }
     const successResponse = (responses['200'] ??
         responses['201']); // all refs have been resolved in main.ts
     const successResponseContent = successResponse?.content?.['application/json'] ??
         successResponse?.content?.['text/plain'];
     const successResponseContentSchema = successResponseContent?.schema;
-    const responseMarkdown = successResponseContent?.schema
-        ? (0, json_to_markdown_1.jsonToMarkdown)({ schema: successResponseContentSchema })
-        : '';
+    flattenedResponse = (0, get_flattened_schema_1.getflattenedSchema)(successResponseContentSchema);
+    // const responseMarkdown = successResponseContent?.schema
+    //   ? jsonToMarkdownTable({ schema: successResponseContentSchema })
+    //   : ''
+    const mdc = new markdown_1.Markdown();
+    const headers = ['Property', 'Type', 'Required', 'Description', 'Example'];
+    // const rows = Object.entries(obj.schema.properties ?? {}).map(
+    //   ([propertyName, propertyMetadata]) => [
+    //     propertyName,
+    //     propertyMetadata.type,
+    //     obj.schema.required?.includes(propertyName) ? 'Yes' : 'No',
+    //     propertyMetadata.description ?? '',
+    //     propertyMetadata.example ?? ''
+    //   ]
+    // )
+    const baseFlattenedSchemaPropertyList = flattenedBaseResponse?.map(row => row.property);
+    const rowsFromNewBody = flattenedResponse.map(row => {
+        const hasBeenAdded = !baseFlattenedSchemaPropertyList.includes(row.property);
+        return {
+            property: `${hasBeenAdded ? '✅' : ''} ${row.property}`,
+            type: row.type,
+            required: row.required,
+            description: row.description,
+            example: row.example
+        };
+    });
+    const rows = [...rowsFromNewBody];
+    const dataIndex = headers.map(header => header.toLowerCase());
+    const tableMarkdown = (0, table_from_object_1.tableFromObject)({ headers, rows, dataIndex });
+    mdc.appendToNewLine(tableMarkdown);
+    const responseMarkdown = successResponseContent?.schema ? mdc.toString() : '';
     return responseMarkdown;
 };
 exports.responseFormatter = responseFormatter;
