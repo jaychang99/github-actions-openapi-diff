@@ -5,17 +5,14 @@ const recursivelyFormatNestedObjects = (
   schema: SingleReponseObj['schema'],
   rows: FlattenedSchemaPropertyItem[] = [],
   iteration = 0,
-  previousPropertyPrefix = '',
-  fromArray?: boolean
-) => {
+  previousPropertyPrefix = ''
+): FlattenedSchemaPropertyItem[] => {
   console.log('iteration: ', iteration)
   console.table(rows)
   console.log('schema', schema)
   const isInitialIteration = iteration === 0
   const conditionalPropertyPrefix = isInitialIteration ? '' : '.'
   if (schema.type === 'array') {
-    console.log('schema.type detected as: ' + schema.type)
-    // console.log('schema', schema)
     const row: FlattenedSchemaPropertyItem = {
       property: `${previousPropertyPrefix}${conditionalPropertyPrefix}[]`,
       type: schema.type ?? '',
@@ -27,27 +24,20 @@ const recursivelyFormatNestedObjects = (
     rows.push(row)
 
     if (schema.items.properties) {
-      console.log('schema.items.properties detected as: ' + schema.items.type)
       recursivelyFormatNestedObjects(
         schema.items,
         rows,
         iteration + 1,
-        row.property,
-        true
+        row.property
       )
     } else {
       return rows
     }
   } else {
-    console.log('schema.type detected as non-array: ' + schema.type)
-
-    // console.log('rows', rows)
-    // console.log('--schema', schema)
     if (schema.properties) {
       for (const [propertyName, propertyMetadata] of Object.entries(
         schema.properties
       )) {
-        console.log('checking propertyName: ' + propertyName)
         const arrayPrefix = propertyMetadata.type === 'array' ? '.[]' : ''
         const row: FlattenedSchemaPropertyItem = {
           property: `${previousPropertyPrefix}${conditionalPropertyPrefix}${propertyName}`,
@@ -67,8 +57,7 @@ const recursivelyFormatNestedObjects = (
             propertyMetadata.items,
             rows,
             iteration + 1,
-            row.property + arrayPrefix,
-            true
+            row.property + arrayPrefix
           )
         }
       }
