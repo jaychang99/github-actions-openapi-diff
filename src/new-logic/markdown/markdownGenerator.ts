@@ -72,4 +72,8 @@ export class MarkdownGenerator {
   getMarkdown(): string {
     return this.markdown
   }
+
+  static arrayToMarkdown(array: string[]): string {
+    return `[${array.join(', ')}]`
+  }
 }

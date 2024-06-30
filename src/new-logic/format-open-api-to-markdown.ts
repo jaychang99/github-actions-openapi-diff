@@ -32,6 +32,19 @@ const PARAMETERS_TABLE_HEADERS = [
   'content'
 ]
 
+const REQUEST_BODY_TABLE_HEADERS = [
+  'title',
+  'type',
+  'description',
+  'default',
+  'enum',
+  'content',
+  'required',
+  'properties',
+  'example',
+  'deprecated'
+]
+
 const isPathItemObjectKeyHttpMethod = (
   key: string
 ): key is OpenAPIV3.HttpMethods => {
@@ -62,7 +75,7 @@ export const formatOpenApiToMarkdown: FormatOpenApiToMarkdown = openapiJson => {
 
       const md = new MarkdownGenerator()
 
-      const { description, parameters } = endpointItem
+      const { description, parameters, requestBody } = endpointItem
       const { UNDEFINED_DESCRIPTION } = DEFAULT_MESSAGES
 
       md.addHorizontalRule()
@@ -104,6 +117,53 @@ export const formatOpenApiToMarkdown: FormatOpenApiToMarkdown = openapiJson => {
           // examples,
           // content
         })
+      }
+
+      if (requestBody) {
+        if (!('$ref' in requestBody)) {
+          md.addH2('Request Body')
+
+          for (const contentItemKey in requestBody.content) {
+            const contentItem = requestBody.content[contentItemKey]
+            md.addH3(contentItemKey)
+
+            const { schema } = contentItem
+
+            if (schema && !('$ref' in schema)) {
+              if (schema.type === 'array') {
+                // ArraySchemaObject
+              } else {
+                // NonArraySchemaObject
+                const { properties } = schema
+
+                md.addTableHeader(REQUEST_BODY_TABLE_HEADERS)
+                md.setCurrentTableHeader(REQUEST_BODY_TABLE_HEADERS)
+                for (const propertyKey in properties) {
+                  const property = properties[propertyKey]
+                  console.log('propertyKey', propertyKey)
+                  console.log('property', property)
+                  if ('$ref' in property) {
+                    // Reference Object
+                  } else {
+                    // NonReferenceObject
+                    md.addTableRow({
+                      title: propertyKey,
+                      description: property.description ?? '',
+                      type: property.type ?? '',
+                      example: property.example ?? '',
+                      default: property.default ?? '',
+                      enum:
+                        property.enum &&
+                        MarkdownGenerator.arrayToMarkdown(property.enum)
+                    })
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          // when requestBody itself is a Referece Object
+        }
       }
 
       markdownList.push(md.getMarkdown())
