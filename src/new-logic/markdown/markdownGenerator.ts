@@ -47,6 +47,10 @@ export class MarkdownGenerator {
     }
   }
 
+  addString(content: string): void {
+    this.markdown += content
+  }
+
   addTableHeader(headers: string[]): void {
     this.addNewLine()
     this.markdown += `| ${headers.join(' | ')} |\n`

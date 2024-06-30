@@ -1,4 +1,5 @@
 import { MarkdownGenerator } from '@/new-logic/markdown/markdownGenerator'
+import { getRequestBodyResponseContentInMarkdown } from '@/new-logic/operation-object-handlers/get-request-body-response-content-in-markdown'
 import { OpenAPIV3 } from 'openapi-types'
 
 type FormatOpenApiToMarkdown = (openapiJson: OpenAPIV3.Document) => string
@@ -75,7 +76,7 @@ export const formatOpenApiToMarkdown: FormatOpenApiToMarkdown = openapiJson => {
 
       const md = new MarkdownGenerator()
 
-      const { description, parameters, requestBody } = endpointItem
+      const { description, parameters, requestBody, responses } = endpointItem
       const { UNDEFINED_DESCRIPTION } = DEFAULT_MESSAGES
 
       md.addHorizontalRule()
@@ -163,6 +164,29 @@ export const formatOpenApiToMarkdown: FormatOpenApiToMarkdown = openapiJson => {
           }
         } else {
           // when requestBody itself is a Referece Object
+        }
+      }
+
+      for (const responseKey in responses) {
+        const response = responses[responseKey]
+
+        md.addH2(`Response: ${responseKey}`)
+
+        if (!('$ref' in response)) {
+          // ResponseObject
+
+          md.addBulletPoint(
+            `Description: ${response.description ?? UNDEFINED_DESCRIPTION}`
+          )
+
+          const responseBodyMd = getRequestBodyResponseContentInMarkdown({
+            content: response.content,
+            tableHeaders: REQUEST_BODY_TABLE_HEADERS
+          })
+
+          md.addString(responseBodyMd)
+        } else {
+          // ReferenceObject
         }
       }
 
