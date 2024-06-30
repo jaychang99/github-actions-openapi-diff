@@ -26,7 +26,7 @@ const schemaToMarkdown: SchemaToMarkdown = (
             // Reference Object
           } else {
             // NonReferenceObject
-            const title = `${previousPropertyKey}.[].${propertyKey}`
+            const title = `${previousPropertyKey}[].${propertyKey}`
 
             md.addTableRow({
               title,
@@ -54,7 +54,7 @@ const schemaToMarkdown: SchemaToMarkdown = (
           // Reference Object
         } else {
           // NonReferenceObject
-          const title = `${previousPropertyKey}.${propertyKey}`
+          const title = `${previousPropertyKey}${propertyKey}`
 
           md.addTableRow({
             title,
