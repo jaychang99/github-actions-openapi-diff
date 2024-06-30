@@ -1,4 +1,4 @@
-import { MarkdownGenerator } from '@/new-logic/markdown/markdownGenerator'
+import { MarkdownGenerator } from '@/new-logic/markdown/markdown-generator'
 import { OpenAPIV3 } from 'openapi-types'
 
 type GetRequestBodyResponseContentInMarkdown = (arg: {
