@@ -124,44 +124,12 @@ export const formatOpenApiToMarkdown: FormatOpenApiToMarkdown = openapiJson => {
         if (!('$ref' in requestBody)) {
           md.addH2('Request Body')
 
-          for (const contentItemKey in requestBody.content) {
-            const contentItem = requestBody.content[contentItemKey]
-            md.addH3(contentItemKey)
+          const requestBodyMd = getRequestBodyResponseContentInMarkdown({
+            content: requestBody.content,
+            tableHeaders: REQUEST_BODY_TABLE_HEADERS
+          })
 
-            const { schema } = contentItem
-
-            if (schema && !('$ref' in schema)) {
-              if (schema.type === 'array') {
-                // ArraySchemaObject
-              } else {
-                // NonArraySchemaObject
-                const { properties } = schema
-
-                md.addTableHeader(REQUEST_BODY_TABLE_HEADERS)
-                md.setCurrentTableHeader(REQUEST_BODY_TABLE_HEADERS)
-                for (const propertyKey in properties) {
-                  const property = properties[propertyKey]
-                  console.log('propertyKey', propertyKey)
-                  console.log('property', property)
-                  if ('$ref' in property) {
-                    // Reference Object
-                  } else {
-                    // NonReferenceObject
-                    md.addTableRow({
-                      title: propertyKey,
-                      description: property.description ?? '',
-                      type: property.type ?? '',
-                      example: property.example ?? '',
-                      default: property.default ?? '',
-                      enum:
-                        property.enum &&
-                        MarkdownGenerator.arrayToMarkdown(property.enum)
-                    })
-                  }
-                }
-              }
-            }
-          }
+          md.addString(requestBodyMd)
         } else {
           // when requestBody itself is a Referece Object
         }
