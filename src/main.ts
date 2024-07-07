@@ -3,9 +3,10 @@ import { wait } from './wait'
 import { getFileFromBranch } from './utils/get-file-from-branch'
 import fs from 'fs'
 import * as http from 'http'
-import { generateMarkdownDiff } from './utils/generate-markdown-diff'
 import markdownit from 'markdown-it'
 import { resolveRefs } from './utils/resolve-refs'
+import { transformOpenapiDocToClass } from '@/new-logic/transform-openapi-doc-to-class'
+import { formatOpenApiDiffToMarkdown } from '@/new-logic/format-open-api-diff-to-markdown'
 
 /**
  * The main function for the action.
@@ -49,13 +50,16 @@ export async function run(): Promise<void> {
       : JSON.parse(getFileFromBranch(headBranch, filePath).toString())
 
     // resolve all refs. openapi.json has references to other properties, so we need to resolve them
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const refResolvedBaseFile = resolveRefs(baseFile, baseFile)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const refResolvedHeadFile = resolveRefs(headFile, headFile)
 
-    const markdownDiff = generateMarkdownDiff(
-      refResolvedBaseFile,
-      refResolvedHeadFile
-    )
+    // const markdownDiff = generateMarkdownDiff(
+    //   refResolvedBaseFile,
+    //   refResolvedHeadFile
+    // )
+    const markdownDiff = 'Hello from OpenAPI Diff!'
 
     if (!isLocal) {
       // Set outputs for other workflow steps to use
@@ -66,7 +70,16 @@ export async function run(): Promise<void> {
       // Define the port number
       const PORT = 5050
       const md = markdownit()
-      const mdRenderedResult = md.render(markdownDiff)
+      // const openapiBaseFileInMd = formatOpenApiToMarkdown(headFile)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const endpointList = transformOpenapiDocToClass(headFile)
+
+      const markdown = formatOpenApiDiffToMarkdown({
+        baseOpenapiJson: baseFile,
+        headOpenapiJson: headFile
+      })
+
+      const mdRenderedResult = md.render(markdown)
       // Create a server
       const server: http.Server = http.createServer((req, res) => {
         // Set the response header
