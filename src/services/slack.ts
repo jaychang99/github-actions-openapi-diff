@@ -79,9 +79,9 @@ export class Slack {
     const changedRequestBody = this._getUnchangedItems(diff.requestBody)
     const changedResponseBody = this._getUnchangedItems(diff.responseBody)
 
-    const mainText = `:bell: ${endpoint} ${translate(
+    const mainText = ` ${endpoint} ${translate(
       STATUS_TO_LOCALE_KEY[diff.status].localeKey
-    )} :bell:`
+    )} `
     const color = STATUS_TO_LOCALE_KEY[diff.status].color
 
     const res = await this.client.chat.postMessage({
@@ -245,7 +245,7 @@ export class Slack {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: `:warning: ${mainText} :warning:`
+            text: `${mainText}`
           }
         },
         {
