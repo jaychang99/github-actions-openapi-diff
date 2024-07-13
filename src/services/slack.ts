@@ -82,64 +82,70 @@ export class Slack {
     const mainText = `:bell: ${endpoint} ${translate(
       STATUS_TO_LOCALE_KEY[diff.status].localeKey
     )} :bell:`
+    const color = STATUS_TO_LOCALE_KEY[diff.status].color
 
     const res = await this.client.chat.postMessage({
       channel: this.channelId,
       text: mainText,
-      blocks: [
+      attachments: [
         {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: mainText
-          }
-        },
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            // TODO: come up with a better way to tackle empty memberIdListToMention
-            text: this.memberIdListToMention.length
-              ? this.memberIdListToMention.map(id => `<@${id}>`).join(' ')
-              : ' ' // because slack doesn't allow empty text
-          }
-        },
-        {
-          type: 'section',
-          fields: [
+          color,
+          blocks: [
             {
-              type: 'mrkdwn',
-              text: `*${translate('endpoint.singular')}:*\n ${endpoint}`
+              type: 'header',
+              text: {
+                type: 'plain_text',
+                text: mainText
+              }
             },
             {
-              type: 'mrkdwn',
-              text: `*${translate('changed.parameters')} ${translate(
-                'count'
-              )}:*\n ${changedParameters.length}`
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                // TODO: come up with a better way to tackle empty memberIdListToMention
+                text: this.memberIdListToMention.length
+                  ? this.memberIdListToMention.map(id => `<@${id}>`).join(' ')
+                  : ' ' // because slack doesn't allow empty text
+              }
             },
             {
-              type: 'mrkdwn',
-              text: `*${translate('changed.requestBody')} ${translate(
-                'count'
-              )}:*\n ${changedRequestBody.length}`
+              type: 'section',
+              fields: [
+                {
+                  type: 'mrkdwn',
+                  text: `*${translate('endpoint.singular')}:*\n ${endpoint}`
+                },
+                {
+                  type: 'mrkdwn',
+                  text: `*${translate('changed.parameters')} ${translate(
+                    'count'
+                  )}:*\n ${changedParameters.length}`
+                },
+                {
+                  type: 'mrkdwn',
+                  text: `*${translate('changed.requestBody')} ${translate(
+                    'count'
+                  )}:*\n ${changedRequestBody.length}`
+                },
+                {
+                  type: 'mrkdwn',
+                  text: `*${translate('changed.responseBody')} ${translate(
+                    'count'
+                  )}:*\n ${changedResponseBody.length}`
+                }
+              ]
             },
             {
-              type: 'mrkdwn',
-              text: `*${translate('changed.responseBody')} ${translate(
-                'count'
-              )}:*\n ${changedResponseBody.length}`
-            }
-          ]
-        },
-        {
-          type: 'divider'
-        },
-        {
-          type: 'section',
-          fields: [
+              type: 'divider'
+            },
             {
-              type: 'plain_text',
-              text: translate('see_thread_for_details')
+              type: 'section',
+              fields: [
+                {
+                  type: 'plain_text',
+                  text: translate('see_thread_for_details')
+                }
+              ]
             }
           ]
         }
