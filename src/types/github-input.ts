@@ -8,6 +8,12 @@ export interface GithubInput {
   initialDelayInMilliseconds?: Config['initialDelayInMilliseconds']
 
   /**
+   * The locale to use for the action
+   * @default 'en-us'
+   */
+  locale?: string
+
+  /**
    * If posting to slack via webhook, provide the webhook url
    */
   slackWebhookUrl?: string
