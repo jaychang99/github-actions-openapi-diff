@@ -1,5 +1,11 @@
 import { DiffOutputItem } from 'openapi-diff-node'
-import { WebClient } from '@slack/web-api'
+import {
+  RichTextBlock,
+  RichTextList,
+  RichTextQuote,
+  RichTextSection,
+  WebClient
+} from '@slack/web-api'
 
 type DetailItem =
   | DiffOutputItem['queryParams']
@@ -94,6 +100,68 @@ export class Slack {
     item: DetailItem,
     thread_ts?: string
   ): Promise<void> {
+    const elements: RichTextBlock['elements'] = []
+
+    for (const param of item) {
+      const statusAndEndpoint: RichTextQuote = {
+        type: 'rich_text_quote',
+        elements: [
+          {
+            type: 'text',
+            text: `[${param.status}] - `
+          },
+          {
+            type: 'text',
+            text: param.name,
+            style: {
+              code: true
+            }
+          }
+        ]
+      }
+
+      const description: RichTextList = {
+        type: 'rich_text_list',
+        style: 'bullet',
+        indent: 0,
+        border: 1,
+        elements: [
+          {
+            type: 'rich_text_section',
+            elements: [
+              {
+                type: 'text',
+                text: param.description
+              }
+            ]
+          },
+          {
+            type: 'rich_text_section',
+            elements: [
+              {
+                type: 'text',
+                text: param.required ? 'Required' : 'Optional'
+              }
+            ]
+          }
+        ]
+      }
+
+      const newline: RichTextSection = {
+        type: 'rich_text_section',
+        elements: [
+          {
+            type: 'text',
+            text: '\n'
+          }
+        ]
+      }
+
+      elements.push(statusAndEndpoint)
+      elements.push(description)
+      elements.push(newline)
+    }
+
     await this.client.chat.postMessage({
       channel: this.channelId,
       thread_ts,
@@ -107,13 +175,8 @@ export class Slack {
           }
         },
         {
-          type: 'section',
-          fields: item.map(param => {
-            return {
-              type: 'mrkdwn',
-              text: `*${param.status}*\n \`${param.name}\` - ${param.description}\n`
-            }
-          })
+          type: 'rich_text',
+          elements
         }
       ]
     })
