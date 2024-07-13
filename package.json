@@ -35,7 +35,7 @@
     "package:local": "npx ncc build src/index.ts -o .local/dist --source-map --license licenses.txt",
     "package:watch:local": "npm run package:local -- --watch",
     "dev": "npm run package:watch:local && npm run dev:nodemon",
-    "dev:nodemon": "OPENAPI_DIFF_NODE_ENV=local nodemon ./.local/dist/index.js --watch ./.local/dist/index.js",
+    "dev:nodemon": "env-cmd -f ./.local/.env nodemon ./.local/dist/index.js --watch ./.local/dist/index.js",
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
@@ -74,6 +74,7 @@
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
+    "@slack/web-api": "^7.3.1",
     "markdown-it": "^14.1.0"
   },
   "devDependencies": {
@@ -84,6 +85,7 @@
     "@typescript-eslint/eslint-plugin": "^7.9.0",
     "@typescript-eslint/parser": "^7.9.0",
     "@vercel/ncc": "^0.38.1",
+    "env-cmd": "^10.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-github": "^4.10.2",
     "eslint-plugin-jest": "^28.5.0",
