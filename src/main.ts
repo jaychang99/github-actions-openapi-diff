@@ -3,9 +3,9 @@ import { wait } from './wait'
 import { getFileFromBranch } from './utils/get-file-from-branch'
 import fs from 'fs'
 import * as http from 'http'
-import { generateMarkdownDiff } from './utils/generate-markdown-diff'
 import markdownit from 'markdown-it'
-import { resolveRefs } from './utils/resolve-refs'
+import { openapiDiff } from 'openapi-diff-node'
+import { formatDiffFromExternalLibrary } from '@/utils/format-diff-from-external-library'
 
 /**
  * The main function for the action.
@@ -48,25 +48,22 @@ export async function run(): Promise<void> {
         )
       : JSON.parse(getFileFromBranch(headBranch, filePath).toString())
 
-    // resolve all refs. openapi.json has references to other properties, so we need to resolve them
-    const refResolvedBaseFile = resolveRefs(baseFile, baseFile)
-    const refResolvedHeadFile = resolveRefs(headFile, headFile)
+    const diffFromExternalLibrary = openapiDiff(baseFile, headFile)
 
-    const markdownDiff = generateMarkdownDiff(
-      refResolvedBaseFile,
-      refResolvedHeadFile
+    const formattedDiffFromExternalLibrary = formatDiffFromExternalLibrary(
+      diffFromExternalLibrary
     )
 
     if (!isLocal) {
       // Set outputs for other workflow steps to use
-      core.setOutput('result', markdownDiff)
+      core.setOutput('result', formattedDiffFromExternalLibrary)
     }
 
     if (isLocal) {
       // Define the port number
       const PORT = 5050
       const md = markdownit()
-      const mdRenderedResult = md.render(markdownDiff)
+      const mdRenderedResult = md.render(formattedDiffFromExternalLibrary)
       // Create a server
       const server: http.Server = http.createServer((req, res) => {
         // Set the response header
