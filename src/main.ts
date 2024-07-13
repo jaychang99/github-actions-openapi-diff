@@ -8,14 +8,21 @@ import { openapiDiff } from 'openapi-diff-node'
 import { formatDiffFromExternalLibrary } from '@/utils/format-diff-from-external-library'
 import { Slack } from '@/services/slack'
 import { validateInputAndSetConfig } from '@/utils/validate-input'
+import { Config } from '@/types/config'
 
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
+
+// eslint-disable-next-line import/no-mutable-exports
+export let locale: Config['locale'] = 'en-us'
+
 export async function run(): Promise<void> {
   try {
     const config = validateInputAndSetConfig()
+
+    locale = config.locale
 
     console.log(`starting in ${config.env} environment`)
 

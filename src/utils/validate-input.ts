@@ -20,6 +20,12 @@ export function validateInputAndSetConfig(): Config {
 
   const isLocal = env === 'local'
 
+  const locale = isLocal ? process.env.LOCALE : core.getInput('locale')
+
+  if (locale !== 'en-us' && locale !== 'ko-kr') {
+    throw new Error('locale must be set to either en-us or ko-kr')
+  }
+
   // slack input validation
   const isSlackEnabled = isLocal
     ? process.env.SLACK_ENABLED
@@ -46,6 +52,7 @@ export function validateInputAndSetConfig(): Config {
     ) {
       return {
         env,
+        locale,
         initialDelayInMilliseconds: 500,
         slackConfig: {
           enabled: true,
@@ -61,6 +68,7 @@ export function validateInputAndSetConfig(): Config {
   } else {
     return {
       env,
+      locale,
       initialDelayInMilliseconds: 500,
       slackConfig: {
         enabled: false

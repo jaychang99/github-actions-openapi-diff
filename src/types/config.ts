@@ -1,4 +1,5 @@
 export interface Config {
+  locale: 'en-us' | 'ko-kr'
   env: 'local' | 'github'
   initialDelayInMilliseconds: number
   slackConfig: SlackDisabledOptions | SlackEnabledOptions

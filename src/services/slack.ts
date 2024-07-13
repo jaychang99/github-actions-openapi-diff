@@ -6,6 +6,8 @@ import {
   RichTextSection,
   WebClient
 } from '@slack/web-api'
+import { translate } from '@/locale/translate'
+import { Locale } from '@/types/locale'
 
 type DetailItem =
   | DiffOutputItem['queryParams']
@@ -17,6 +19,24 @@ interface SendEndpointReturnType {
   changedParameters: DetailItem
   changedRequestBody: DetailItem
   changedResponseBody: DetailItem
+}
+
+type ChangeType = 'parameters' | 'requestBody' | 'responseBody'
+
+const STATUS_TO_LOCALE_KEY: Record<
+  DiffOutputItem['status'],
+  Partial<keyof Locale>
+> = {
+  ADDED: 'status.added',
+  REMOVED: 'status.removed',
+  MODIFIED: 'status.modified',
+  UNCHANGED: 'status.unchanged'
+}
+
+const TYPE_TO_LOCALE_KEY: Record<ChangeType, Partial<keyof Locale>> = {
+  parameters: 'changed.parameters',
+  requestBody: 'changed.requestBody',
+  responseBody: 'changed.responseBody'
 }
 
 export class Slack {
@@ -40,15 +60,19 @@ export class Slack {
     const changedRequestBody = this._getUnchangedItems(diff.requestBody)
     const changedResponseBody = this._getUnchangedItems(diff.responseBody)
 
+    const mainText = `:bell: ${translate('endpoint.singular')} ${translate(
+      STATUS_TO_LOCALE_KEY[diff.status]
+    )} :bell:`
+
     const res = await this.client.chat.postMessage({
       channel: this.channelId,
-      text: 'api changed',
+      text: mainText,
       blocks: [
         {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: `:bell: ENDPOINT ${diff.status} :bell:`
+            text: mainText
           }
         },
         {
@@ -56,19 +80,25 @@ export class Slack {
           fields: [
             {
               type: 'mrkdwn',
-              text: `*Endpoint:*\n ${endpoint}`
+              text: `*${translate('endpoint.singular')}:*\n ${endpoint}`
             },
             {
               type: 'mrkdwn',
-              text: `*Parameters Changed:*\n ${changedParameters.length}`
+              text: `*${translate('changed.parameters')} ${translate(
+                'count'
+              )}:*\n ${changedParameters.length}`
             },
             {
               type: 'mrkdwn',
-              text: `*Request Body Changed:*\n ${changedRequestBody.length}`
+              text: `*${translate('changed.requestBody')} ${translate(
+                'count'
+              )}:*\n ${changedRequestBody.length}`
             },
             {
               type: 'mrkdwn',
-              text: `*Response Body Changed:*\n ${changedResponseBody.length}`
+              text: `*${translate('changed.responseBody')} ${translate(
+                'count'
+              )}:*\n ${changedResponseBody.length}`
             }
           ]
         },
@@ -80,7 +110,7 @@ export class Slack {
           fields: [
             {
               type: 'plain_text',
-              text: 'See thread for more details'
+              text: translate('see_thread_for_details')
             }
           ]
         }
@@ -96,7 +126,7 @@ export class Slack {
   }
 
   private async _sendDetailItem(
-    type: 'parameters' | 'requestBody' | 'responseBody',
+    type: ChangeType,
     item: DetailItem,
     thread_ts?: string
   ): Promise<void> {
@@ -108,7 +138,7 @@ export class Slack {
         elements: [
           {
             type: 'text',
-            text: `[${param.status}] - `
+            text: `[${translate(STATUS_TO_LOCALE_KEY[param.status])}] - `
           },
           {
             type: 'text',
@@ -162,16 +192,18 @@ export class Slack {
       elements.push(newline)
     }
 
+    const mainText = translate(TYPE_TO_LOCALE_KEY[type])
+
     await this.client.chat.postMessage({
       channel: this.channelId,
       thread_ts,
-      text: `${type} Changed`,
+      text: mainText,
       blocks: [
         {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: `:warning: ${type} Changed :warning:`
+            text: `:warning: ${mainText} :warning:`
           }
         },
         {
