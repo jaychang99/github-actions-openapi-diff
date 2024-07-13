@@ -23,14 +23,29 @@ interface SendEndpointReturnType {
 
 type ChangeType = 'parameters' | 'requestBody' | 'responseBody'
 
-const STATUS_TO_LOCALE_KEY: Record<
-  DiffOutputItem['status'],
-  Partial<keyof Locale>
-> = {
-  ADDED: 'status.added',
-  REMOVED: 'status.removed',
-  MODIFIED: 'status.modified',
-  UNCHANGED: 'status.unchanged'
+const STATUS_TO_LOCALE_KEY: Record<DiffOutputItem['status'], StatusConfig> = {
+  ADDED: {
+    color: '#58a459',
+    emojiCode: 'white_check_mark',
+    localeKey: 'status.added'
+  },
+  REMOVED: {
+    color: '#bb3638',
+    emojiCode: 'no_entry_sign',
+    localeKey: 'status.removed'
+  },
+  MODIFIED: {
+    color: '#f1c232',
+    emojiCode: 'warning',
+    localeKey: 'status.modified'
+  },
+  UNCHANGED: { color: '#e8e7e4', emojiCode: '', localeKey: 'status.unchanged' }
+}
+
+interface StatusConfig {
+  emojiCode: string
+  color: string
+  localeKey: keyof Locale
 }
 
 const TYPE_TO_LOCALE_KEY: Record<ChangeType, Partial<keyof Locale>> = {
@@ -65,7 +80,7 @@ export class Slack {
     const changedResponseBody = this._getUnchangedItems(diff.responseBody)
 
     const mainText = `:bell: ${endpoint} ${translate(
-      STATUS_TO_LOCALE_KEY[diff.status]
+      STATUS_TO_LOCALE_KEY[diff.status].localeKey
     )} :bell:`
 
     const res = await this.client.chat.postMessage({
@@ -147,12 +162,19 @@ export class Slack {
     const elements: RichTextBlock['elements'] = []
 
     for (const param of item) {
+      const emojiCode = STATUS_TO_LOCALE_KEY[param.status].emojiCode
+      const statusLocaleKey = STATUS_TO_LOCALE_KEY[param.status].localeKey
+
       const statusAndEndpoint: RichTextQuote = {
         type: 'rich_text_quote',
         elements: [
           {
+            type: 'emoji',
+            name: emojiCode
+          },
+          {
             type: 'text',
-            text: `[${translate(STATUS_TO_LOCALE_KEY[param.status])}] - `
+            text: ` [${translate(statusLocaleKey)}] - `
           },
           {
             type: 'text',
