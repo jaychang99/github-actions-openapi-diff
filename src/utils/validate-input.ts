@@ -31,6 +31,9 @@ export function validateInputAndSetConfig(): Config {
     ? process.env.SLACK_ENABLED
     : core.getInput('slack_enabled')
 
+  if (isSlackEnabled !== 'true' && isSlackEnabled !== 'false') {
+    throw new Error('slack_enabled must be set to either true or false')
+  }
   const slackChannelId = isLocal
     ? process.env.SLACK_CHANNEL_ID
     : core.getInput('slack_channel_id')
@@ -39,8 +42,22 @@ export function validateInputAndSetConfig(): Config {
     ? process.env.SLACK_ACCESS_TOKEN
     : core.getInput('slack_access_token')
 
-  if (isSlackEnabled !== 'true' && isSlackEnabled !== 'false') {
-    throw new Error('slack_enabled must be set to either true or false')
+  const memberIdListToMention = isLocal
+    ? process.env.MEMBER_ID_LIST_TO_MENTION
+    : core.getInput('member_id_list_to_mention')
+
+  if (memberIdListToMention !== undefined && memberIdListToMention !== '') {
+    // check if memberIdListToMention is a string of comma separated strings
+    const memberIdListToMentionArray = memberIdListToMention.split(',')
+    const invalidMemberId = memberIdListToMentionArray.find(
+      memberId => memberId.trim() === ''
+    )
+
+    if (invalidMemberId) {
+      throw new Error(
+        `member_id_list_to_mention contains an invalid memberId: ${invalidMemberId}`
+      )
+    }
   }
 
   if (isSlackEnabled === 'true') {
@@ -57,7 +74,8 @@ export function validateInputAndSetConfig(): Config {
         slackConfig: {
           enabled: true,
           token: slackAccessToken,
-          channelId: slackChannelId
+          channelId: slackChannelId,
+          memberIdListToMention: memberIdListToMention?.split(',') ?? []
         }
       }
     }

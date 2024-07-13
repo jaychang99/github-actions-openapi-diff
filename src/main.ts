@@ -59,7 +59,8 @@ export async function run(): Promise<void> {
     if (config.slackConfig.enabled) {
       const slack = new Slack(
         config.slackConfig.token,
-        config.slackConfig.channelId
+        config.slackConfig.channelId,
+        config.slackConfig.memberIdListToMention
       )
       // eslint-disable-next-line github/array-foreach
       diffFromExternalLibrary.forEach(diff => {

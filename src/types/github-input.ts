@@ -17,4 +17,9 @@ export interface GithubInput {
    */
   slackToken?: string
   slackChannelId?: string
+
+  /**
+   * If mentioning specific slack members, provide their ids
+   */
+  memberIdListToMention?: string
 }

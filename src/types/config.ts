@@ -13,4 +13,5 @@ interface SlackEnabledOptions {
   enabled: true
   token: string
   channelId: string
+  memberIdListToMention: string[]
 }

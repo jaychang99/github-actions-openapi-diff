@@ -41,7 +41,11 @@ const TYPE_TO_LOCALE_KEY: Record<ChangeType, Partial<keyof Locale>> = {
 
 export class Slack {
   // eslint-disable-next-line prettier/prettier
-  constructor(private token: string, private channelId: string) {
+  constructor(
+    private token: string,
+    private channelId: string,
+    private memberIdListToMention: string[]
+  ) {
     this.client = new WebClient(token)
   }
 
@@ -73,6 +77,16 @@ export class Slack {
           text: {
             type: 'plain_text',
             text: mainText
+          }
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            // TODO: come up with a better way to tackle empty memberIdListToMention
+            text: this.memberIdListToMention.length
+              ? this.memberIdListToMention.map(id => `<@${id}>`).join(' ')
+              : ' ' // because slack doesn't allow empty text
           }
         },
         {
