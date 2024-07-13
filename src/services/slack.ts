@@ -64,7 +64,7 @@ export class Slack {
     const changedRequestBody = this._getUnchangedItems(diff.requestBody)
     const changedResponseBody = this._getUnchangedItems(diff.responseBody)
 
-    const mainText = `:bell: ${translate('endpoint.singular')} ${translate(
+    const mainText = `:bell: ${endpoint} ${translate(
       STATUS_TO_LOCALE_KEY[diff.status]
     )} :bell:`
 
