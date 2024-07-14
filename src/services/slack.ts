@@ -121,7 +121,7 @@ export class Slack {
 
     const res = await this.client.chat.postMessage({
       channel: this.channelId,
-      text: mainText,
+      text: `${mainText} at ${this.githubConfig.repository}`,
       attachments: [
         {
           color,

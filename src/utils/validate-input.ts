@@ -4,7 +4,7 @@ import * as core from '@actions/core'
 import { getFileFromBranch } from '@/utils/get-file-from-branch'
 
 const DEFAULT_OPENAPI_FILE_PATH = 'openapi.json'
-const MOCKUP_REPOSITORY = '/mockup_owner/mockup_repo'
+const MOCKUP_REPOSITORY = 'mockup_owner/mockup_repo'
 const MOCKUP_SHA = 'mockup123_sha'
 const MOCKUP_MESSAGE = 'mockup message for testing'
 
