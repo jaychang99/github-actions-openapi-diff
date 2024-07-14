@@ -99,7 +99,7 @@ export function validateInputAndSetConfig(): Config {
     const baseCommittish = isOnPullRequest
       ? // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
         process.env.GITHUB_BASE_REF!
-      : headCommittish
+      : process.env.GITHUB_REF_NAME!
 
     // core.getInput() always returns a string, so nullish coalescing operator does not work.
     const openapiFilePath =
