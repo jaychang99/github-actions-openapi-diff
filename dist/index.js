@@ -42566,8 +42566,8 @@ function getFileFromBranch(branch, filePath, offsetFromHead) {
     console.log('filePath', filePath);
     console.log('offset', offset);
     (0, child_process_1.execSync)(`git fetch origin ${branch}`);
-    (0, child_process_1.execSync)(`git checkout origin/${branch}${offset} -- ${filePath}`);
-    // execSync(`git checkout FETCH_HEAD${offset} -- ${filePath}`)
+    // execSync(`git checkout origin/${branch}${offset} -- ${filePath}`)
+    (0, child_process_1.execSync)(`git checkout FETCH_HEAD${offset} -- ${filePath}`);
     // execSync(`git checkout HEAD${offset} -- ${filePath}`)
     return (0, fs_1.readFileSync)(filePath);
 }
