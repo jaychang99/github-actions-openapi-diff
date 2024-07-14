@@ -99,23 +99,35 @@ export function validateInputAndSetConfig(): Config {
     const baseCommittish = isOnPullRequest
       ? // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
         process.env.GITHUB_BASE_REF!
-      : `${headCommittish}~1`
+      : headCommittish
 
+    // core.getInput() always returns a string, so nullish coalescing operator does not work.
     const openapiFilePath =
-      core.getInput('openapi_file_path') ?? DEFAULT_OPENAPI_FILE_PATH
+      core.getInput('openapi_file_path') === ''
+        ? DEFAULT_OPENAPI_FILE_PATH
+        : core.getInput('openapi_file_path')
 
     baseFile = JSON.parse(
-      getFileFromBranch(baseCommittish, openapiFilePath).toString()
+      getFileFromBranch(
+        baseCommittish,
+        openapiFilePath,
+        isOnPullRequest ? undefined : 1
+      ).toString()
     )
     headFile = JSON.parse(
       getFileFromBranch(headCommittish, openapiFilePath).toString()
     )
   }
 
+  const sha =
+    core.getInput('head_commit_sha') === ''
+      ? MOCKUP_SHA
+      : core.getInput('head_commit_sha')
+
   const githubConfig: Config['githubConfig'] = {
     repository: process.env.GITHUB_REPOSITORY ?? MOCKUP_REPOSITORY,
     headCommitInfo: {
-      sha: process.env.GITHUB_SHA ?? MOCKUP_SHA,
+      sha,
       message:
         core.getInput('head_commit_message') === ''
           ? MOCKUP_MESSAGE
