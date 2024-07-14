@@ -383,11 +383,6 @@ export class Slack {
         changedResponseBody
       } = await this._sendEndpoint(diff)
 
-      console.log('thread_ts:', thread_ts)
-      console.log('changedParameters:', changedParameters)
-      console.log('changedRequestBody:', changedRequestBody)
-      console.log('changedResponseBody:', changedResponseBody)
-
       if (changedParameters.length > 0) {
         await this._sendDetailItem('parameters', changedParameters, thread_ts)
       }

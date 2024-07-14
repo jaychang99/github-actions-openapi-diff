@@ -42107,7 +42107,10 @@ exports.LOCALE_EN_US = {
     'required.optional': 'Optional',
     'button.goto-api-documentation': 'Go to API documentation',
     repository: 'Repository',
-    'exception.missing-description': 'No description provided. Please add one'
+    'exception.missing-description': 'No description provided. Please add one',
+    description: 'description',
+    required: 'required',
+    example: 'example'
 };
 
 
@@ -42136,7 +42139,10 @@ exports.LOCALE_KO_KR = {
     'required.optional': '선택',
     'button.goto-api-documentation': 'API 문서 바로가기',
     repository: '저장소',
-    'exception.missing-description': '설명이 없습니다. 추가해주세요'
+    'exception.missing-description': '설명이 없습니다. 추가해주세요',
+    description: '설명',
+    required: '필수여부',
+    example: '예시'
 };
 
 
@@ -42471,32 +42477,91 @@ class Slack {
                     }
                 ]
             };
+            let required = '';
+            if (param.required === true) {
+                required = (0, translate_1.translate)('required.required');
+            }
+            else if (param.required === false) {
+                required = (0, translate_1.translate)('required.optional');
+            }
+            else {
+                required = param.required;
+            }
+            const descriptionElements = [];
+            if (param.description) {
+                descriptionElements.push({
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'text',
+                            text: `${(0, translate_1.translate)('description')}: ${param.description}`
+                        }
+                    ]
+                });
+            }
+            if (required !== 'N/A') {
+                descriptionElements.push({
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'text',
+                            text: `${(0, translate_1.translate)('required')}: ${required}`
+                        }
+                    ]
+                });
+            }
+            if (param.example !== 'N/A') {
+                descriptionElements.push({
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'text',
+                            text: `${(0, translate_1.translate)('example')}: ${param.example}`
+                        }
+                    ]
+                });
+            }
+            if (param.enum.length > 0) {
+                const enumElementList = [];
+                for (const e of param.enum) {
+                    const isFirstIteration = enumElementList.length === 0;
+                    enumElementList.push({
+                        type: 'text',
+                        text: isFirstIteration ? 'ENUM: ' : ', '
+                    });
+                    enumElementList.push({
+                        type: 'text',
+                        text: e,
+                        style: {
+                            code: true
+                        }
+                    });
+                }
+                descriptionElements.push({
+                    type: 'rich_text_section',
+                    elements: enumElementList
+                });
+            }
+            if (param.changeLogs.length > 0) {
+                const changeLogElementList = [];
+                for (const changeLog of param.changeLogs) {
+                    const { field, oldValue, newValue } = changeLog;
+                    changeLogElementList.push({
+                        type: 'text',
+                        text: `${field} ${(0, translate_1.translate)('status.modified')}: ${oldValue} -> ${newValue}`
+                    });
+                }
+                descriptionElements.push({
+                    type: 'rich_text_section',
+                    elements: changeLogElementList
+                });
+            }
             const description = {
                 type: 'rich_text_list',
                 style: 'bullet',
                 indent: 0,
                 border: 1,
-                elements: [
-                    {
-                        type: 'rich_text_section',
-                        elements: [
-                            {
-                                type: 'text',
-                                text: param.description ||
-                                    (0, translate_1.translate)('exception.missing-description')
-                            }
-                        ]
-                    },
-                    {
-                        type: 'rich_text_section',
-                        elements: [
-                            {
-                                type: 'text',
-                                text: param.required ? 'Required' : 'Optional'
-                            }
-                        ]
-                    }
-                ]
+                elements: descriptionElements
             };
             const newline = {
                 type: 'rich_text_section',
@@ -42534,10 +42599,6 @@ class Slack {
     async sendSingleApiDiff(diff) {
         try {
             const { thread_ts, changedParameters, changedRequestBody, changedResponseBody } = await this._sendEndpoint(diff);
-            console.log('thread_ts:', thread_ts);
-            console.log('changedParameters:', changedParameters);
-            console.log('changedRequestBody:', changedRequestBody);
-            console.log('changedResponseBody:', changedResponseBody);
             if (changedParameters.length > 0) {
                 await this._sendDetailItem('parameters', changedParameters, thread_ts);
             }
