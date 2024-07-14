@@ -16727,17 +16727,20 @@ function recursivelyFlattenMediaType(schema, propertyPrefix = "") {
     if (!properties) return flattenedMediaType;
     if ("$ref" in properties) return flattenedMediaType;
     Object.entries(properties).forEach(([propertyName, propertyItem]) => {
-      var _a;
+      var _a, _b;
       if ("$ref" in propertyItem) return;
       const { description, required, type } = propertyItem;
       const isRoot = !propertyPrefix;
       const addOnBefore = isRoot ? "" : `${propertyPrefix}.`;
       const name = propertyName ? `${addOnBefore}${propertyName}` : TEXT_DEFAULT_NOT_AVAILABLE;
+      const example = typeof (propertyItem == null ? void 0 : propertyItem.example) === "object" ? JSON.stringify(propertyItem == null ? void 0 : propertyItem.example) : (_a = propertyItem == null ? void 0 : propertyItem.example) != null ? _a : TEXT_DEFAULT_NOT_AVAILABLE;
       const property = {
         name,
         description: description != null ? description : TEXT_DEFAULT_NOT_AVAILABLE,
-        required: (_a = required == null ? void 0 : required.includes(propertyName != null ? propertyName : "")) != null ? _a : false,
-        type: type != null ? type : TEXT_DEFAULT_NOT_AVAILABLE
+        required: required ? required == null ? void 0 : required.includes(propertyName != null ? propertyName : "") : TEXT_DEFAULT_NOT_AVAILABLE,
+        type: type != null ? type : TEXT_DEFAULT_NOT_AVAILABLE,
+        enum: (_b = propertyItem.enum) != null ? _b : [],
+        example
       };
       flattenedMediaType.push(property);
       recursivelyFlattenMediaType(propertyItem, name);
@@ -16750,16 +16753,19 @@ function flattenQueryParams(endpointItem) {
   var _a;
   const flattenedQueryParams = [];
   (_a = endpointItem.parameters) == null ? void 0 : _a.forEach((param) => {
-    var _a2, _b, _c;
+    var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     if ("$ref" in param) return;
     if (param.schema && "$ref" in param.schema) return;
+    const example = typeof ((_a2 = param.schema) == null ? void 0 : _a2.example) === "object" ? JSON.stringify((_b = param.schema) == null ? void 0 : _b.example) : (_d = (_c = param.schema) == null ? void 0 : _c.example) != null ? _d : TEXT_DEFAULT_NOT_AVAILABLE;
     flattenedQueryParams.push({
       name: param.name,
       in: param.in,
       // TODO: figure out a way to remove type assertion
-      description: (_a2 = param.description) != null ? _a2 : "",
-      required: !!param.required,
-      type: (_c = (_b = param.schema) == null ? void 0 : _b.type) != null ? _c : TEXT_DEFAULT_NOT_AVAILABLE
+      description: (_e = param.description) != null ? _e : "",
+      required: (_f = param.required) != null ? _f : TEXT_DEFAULT_NOT_AVAILABLE,
+      type: (_h = (_g = param.schema) == null ? void 0 : _g.type) != null ? _h : TEXT_DEFAULT_NOT_AVAILABLE,
+      enum: (_j = (_i = param.schema) == null ? void 0 : _i.enum) != null ? _j : [],
+      example
     });
   });
   return flattenedQueryParams;
@@ -16837,23 +16843,36 @@ function diffFlattenedMediaType(flattenedOldMediaType, flattenedNewMediaType) {
     if (!oldMediaType) {
       flattenedMediaType2.push(__spreadProps(__spreadValues({}, newMediaType), {
         status: "ADDED",
-        modifiedFields: []
+        modifiedFields: [],
+        changeLogs: []
       }));
       return;
     }
     if (JSON.stringify(oldMediaType) === JSON.stringify(newMediaType)) {
       flattenedMediaType2.push(__spreadProps(__spreadValues({}, newMediaType), {
         status: "UNCHANGED",
-        modifiedFields: []
+        modifiedFields: [],
+        changeLogs: []
       }));
     }
     const modifiedFields = Object.keys(newMediaType).filter(
-      (key) => newMediaType[key] !== oldMediaType[key]
+      (key) => (
+        // reference objects (arrays, (non-array) objects, etc) are always different, so stringify and compare
+        JSON.stringify(newMediaType[key]) !== JSON.stringify(oldMediaType[key])
+      )
     );
+    const changeLogs = modifiedFields.map((field) => {
+      return {
+        field,
+        oldValue: oldMediaType[field],
+        newValue: newMediaType[field]
+      };
+    });
     if (modifiedFields.length) {
       flattenedMediaType2.push(__spreadProps(__spreadValues({}, newMediaType), {
         status: "MODIFIED",
-        modifiedFields
+        modifiedFields,
+        changeLogs
       }));
     }
   });
@@ -16864,7 +16883,8 @@ function diffFlattenedMediaType(flattenedOldMediaType, flattenedNewMediaType) {
     if (!newMediaType) {
       flattenedMediaType2.push(__spreadProps(__spreadValues({}, oldMediaType), {
         status: "REMOVED",
-        modifiedFields: []
+        modifiedFields: [],
+        changeLogs: []
       }));
     }
   });
@@ -16881,18 +16901,30 @@ function diffFlattenedQueryParams(flattenedOldQueryParams, flattenedNewQueryPara
     if (!oldParam) {
       flattenedQueryParams.push(__spreadProps(__spreadValues({}, newParam), {
         status: "ADDED",
-        modifiedFields: []
+        modifiedFields: [],
+        changeLogs: []
       }));
       return;
     }
     if (JSON.stringify(oldParam) === JSON.stringify(newParam)) return;
     const modifiedFields = Object.keys(newParam).filter(
-      (key) => newParam[key] !== oldParam[key]
+      (key) => (
+        // reference objects (arrays, (non-array) objects, etc) are always different, so stringify and compare
+        JSON.stringify(newParam[key]) !== JSON.stringify(oldParam[key])
+      )
     );
+    const changeLogs = modifiedFields.map((field) => {
+      return {
+        field,
+        oldValue: oldParam[field],
+        newValue: newParam[field]
+      };
+    });
     if (modifiedFields.length) {
       flattenedQueryParams.push(__spreadProps(__spreadValues({}, newParam), {
         status: "MODIFIED",
-        modifiedFields
+        modifiedFields,
+        changeLogs
       }));
     }
   });
@@ -16917,7 +16949,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
           ...newItem.flattenedQueryParams.map(
             (param) => __spreadProps(__spreadValues({}, param), {
               status: "ADDED",
-              modifiedFields: []
+              modifiedFields: [],
+              changeLogs: []
             })
           )
         ],
@@ -16925,7 +16958,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
           ...newItem.flattenedRequestBody.map(
             (param) => __spreadProps(__spreadValues({}, param), {
               status: "ADDED",
-              modifiedFields: []
+              modifiedFields: [],
+              changeLogs: []
             })
           )
         ],
@@ -16933,7 +16967,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
           ...newItem.flattenedResponseBody.map(
             (param) => __spreadProps(__spreadValues({}, param), {
               status: "ADDED",
-              modifiedFields: []
+              modifiedFields: [],
+              changeLogs: []
             })
           )
         ],
@@ -16970,7 +17005,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
           ...oldItem.flattenedQueryParams.map(
             (param) => __spreadProps(__spreadValues({}, param), {
               status: "REMOVED",
-              modifiedFields: []
+              modifiedFields: [],
+              changeLogs: []
             })
           )
         ],
@@ -16978,7 +17014,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
           ...oldItem.flattenedRequestBody.map(
             (param) => __spreadProps(__spreadValues({}, param), {
               status: "REMOVED",
-              modifiedFields: []
+              modifiedFields: [],
+              changeLogs: []
             })
           )
         ],
@@ -16986,7 +17023,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
           ...oldItem.flattenedResponseBody.map(
             (param) => __spreadProps(__spreadValues({}, param), {
               status: "REMOVED",
-              modifiedFields: []
+              modifiedFields: [],
+              changeLogs: []
             })
           )
         ],
@@ -17021,10 +17059,6 @@ if (isDevelopment) {
   const newSpec = loadSpec(`${EXAMPLE_FILE_BASE_URL}/openapi-new.json`);
   const diff = openapiDiff(oldSpec, newSpec);
   diff.forEach((item) => {
-    const apiToConsoleLog = {
-      method: "get",
-      path: "/sdk/campaigns/{id}"
-    };
     console.log("|-----------------------|");
     console.log("|                       |");
     console.log("|         \u{1F505}API\u{1F505}       |");
@@ -17038,6 +17072,21 @@ if (isDevelopment) {
     console.table(item.requestBody);
     console.log("--- Response Body ---");
     console.table(item.responseBody);
+    item.queryParams.forEach((param) => {
+      if (param.changeLogs.length) {
+        console.table(param.changeLogs);
+      }
+    });
+    item.requestBody.forEach((param) => {
+      if (param.changeLogs.length) {
+        console.table(param.changeLogs);
+      }
+    });
+    item.responseBody.forEach((param) => {
+      if (param.changeLogs.length) {
+        console.table(param.changeLogs);
+      }
+    });
   });
 }
 var loadSpec2;

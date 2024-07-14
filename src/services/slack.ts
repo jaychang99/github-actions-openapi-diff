@@ -237,34 +237,104 @@ export class Slack {
         ]
       }
 
+      let required = ''
+      if (param.required === true) {
+        required = translate('required.required')
+      } else if (param.required === false) {
+        required = translate('required.optional')
+      } else {
+        required = param.required
+      }
+
+      const descriptionElements: RichTextList['elements'] = []
+
+      if (param.description) {
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: `${translate('description')}: ${param.description}`
+            }
+          ]
+        })
+      }
+
+      if (required !== 'N/A') {
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: `${translate('required')}: ${required}`
+            }
+          ]
+        })
+      }
+
+      if (param.example !== 'N/A') {
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: `${translate('example')}: ${param.example}`
+            }
+          ]
+        })
+      }
+
+      if (param.enum.length > 0) {
+        const enumElementList: RichTextElement[] = []
+
+        for (const e of param.enum) {
+          const isFirstIteration = enumElementList.length === 0
+
+          enumElementList.push({
+            type: 'text',
+            text: isFirstIteration ? 'ENUM: ' : ', '
+          })
+          enumElementList.push({
+            type: 'text',
+            text: e,
+            style: {
+              code: true
+            }
+          })
+        }
+
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: enumElementList
+        })
+      }
+
+      if (param.changeLogs.length > 0) {
+        const changeLogElementList: RichTextElement[] = []
+
+        for (const changeLog of param.changeLogs) {
+          const { field, oldValue, newValue } = changeLog
+
+          changeLogElementList.push({
+            type: 'text',
+            text: `${field} ${translate(
+              'status.modified'
+            )}: ${oldValue} -> ${newValue}`
+          })
+        }
+
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: changeLogElementList
+        })
+      }
+
       const description: RichTextList = {
         type: 'rich_text_list',
         style: 'bullet',
         indent: 0,
         border: 1,
-        elements: [
-          {
-            type: 'rich_text_section',
-            elements: [
-              {
-                type: 'text',
-                text:
-                  param.description ||
-                  translate('exception.missing-description')
-              }
-            ]
-          },
-
-          {
-            type: 'rich_text_section',
-            elements: [
-              {
-                type: 'text',
-                text: param.required ? 'Required' : 'Optional'
-              }
-            ]
-          }
-        ]
+        elements: descriptionElements
       }
 
       const newline: RichTextSection = {
