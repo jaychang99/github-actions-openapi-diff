@@ -309,6 +309,26 @@ export class Slack {
         })
       }
 
+      if (param.changeLogs.length > 0) {
+        const changeLogElementList: RichTextElement[] = []
+
+        for (const changeLog of param.changeLogs) {
+          const { field, oldValue, newValue } = changeLog
+
+          changeLogElementList.push({
+            type: 'text',
+            text: `${field} ${translate(
+              'status.modified'
+            )}: ${oldValue} -> ${newValue}`
+          })
+        }
+
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: changeLogElementList
+        })
+      }
+
       const description: RichTextList = {
         type: 'rich_text_list',
         style: 'bullet',
