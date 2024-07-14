@@ -101,8 +101,11 @@ export function validateInputAndSetConfig(): Config {
         process.env.GITHUB_BASE_REF!
       : headCommittish
 
+    // core.getInput() always returns a string, so nullish coalescing operator does not work.
     const openapiFilePath =
-      core.getInput('openapi_file_path') ?? DEFAULT_OPENAPI_FILE_PATH
+      core.getInput('openapi_file_path') === ''
+        ? DEFAULT_OPENAPI_FILE_PATH
+        : core.getInput('openapi_file_path')
 
     baseFile = JSON.parse(
       getFileFromBranch(
