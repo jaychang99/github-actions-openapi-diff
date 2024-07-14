@@ -19,4 +19,6 @@ export interface Locale {
   'button.goto-api-documentation': string
 
   repository: string
+
+  'exception.missing-description': string
 }

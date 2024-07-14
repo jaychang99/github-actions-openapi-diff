@@ -20,5 +20,7 @@ export const LOCALE_EN_US: Locale = {
 
   'button.goto-api-documentation': 'Go to API documentation',
 
-  repository: 'Repository'
+  repository: 'Repository',
+
+  'exception.missing-description': 'No description provided. Please add one'
 }
