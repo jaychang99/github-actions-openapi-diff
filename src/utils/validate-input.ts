@@ -99,13 +99,17 @@ export function validateInputAndSetConfig(): Config {
     const baseCommittish = isOnPullRequest
       ? // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
         process.env.GITHUB_BASE_REF!
-      : `${headCommittish}~1`
+      : headCommittish
 
     const openapiFilePath =
       core.getInput('openapi_file_path') ?? DEFAULT_OPENAPI_FILE_PATH
 
     baseFile = JSON.parse(
-      getFileFromBranch(baseCommittish, openapiFilePath).toString()
+      getFileFromBranch(
+        baseCommittish,
+        openapiFilePath,
+        isOnPullRequest ? undefined : 1
+      ).toString()
     )
     headFile = JSON.parse(
       getFileFromBranch(headCommittish, openapiFilePath).toString()
