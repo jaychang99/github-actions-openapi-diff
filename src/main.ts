@@ -57,6 +57,13 @@ export async function run(): Promise<void> {
 
     if (!isLocal) {
       // Set outputs for other workflow steps to use
+      core.setOutput('diff_result', formattedDiffFromExternalLibrary)
+      // for backward compatibility, warn users to use `diff_result` instead of `result`
+      console.warn(
+        `
+[DEPRECATED] The output 'result' is deprecated and will be removed in a future release. Please use 'diff_result' instead.
+`
+      )
       core.setOutput('result', formattedDiffFromExternalLibrary)
     }
 
