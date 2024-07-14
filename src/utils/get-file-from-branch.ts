@@ -11,7 +11,8 @@ export function getFileFromBranch(
   console.log('filePath', filePath)
   console.log('offset', offset)
   execSync(`git fetch origin ${branch}`)
-  execSync(`git checkout ${branch} -- ${filePath}`)
-  execSync(`git checkout HEAD${offset} -- ${filePath}`)
+  execSync(`git checkout FETCH_HEAD -- ${filePath}`)
+  execSync(`git checkout FETCH_HEAD${offset} -- ${filePath}`)
+  // execSync(`git checkout HEAD${offset} -- ${filePath}`)
   return readFileSync(filePath)
 }
