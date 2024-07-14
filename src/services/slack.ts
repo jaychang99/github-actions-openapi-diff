@@ -237,6 +237,15 @@ export class Slack {
         ]
       }
 
+      let required = ''
+      if (param.required === true) {
+        required = translate('required.required')
+      } else if (param.required === false) {
+        required = translate('required.optional')
+      } else {
+        required = param.required
+      }
+
       const description: RichTextList = {
         type: 'rich_text_list',
         style: 'bullet',
@@ -260,7 +269,7 @@ export class Slack {
             elements: [
               {
                 type: 'text',
-                text: param.required ? 'Required' : 'Optional'
+                text: `필수여부: ${required}`
               }
             ]
           }
