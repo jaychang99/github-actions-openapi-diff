@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - test-fetch
 
 permissions:
   contents: read
@@ -56,6 +57,18 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
+
+      - name: Show Commit Info (Pull Request)
+        if: github.event_name == 'pull_request'
+        run:
+          echo "HEAD Commit SHA ${{ github.event.pull_request.head.sha}} $(git
+          show -s --format=%s)"
+
+      - name: Show Commit Info (Push)
+        if: github.event_name == 'push'
+        run:
+          echo "HEAD Commit SHA ${{ github.sha }} ${{
+          github.event.head_commit.message }}"
 
       - name: Test Local Action And Capture Output
         id: test-action
