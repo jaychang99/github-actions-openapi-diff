@@ -229,6 +229,10 @@ export class Slack {
             style: {
               code: true
             }
+          },
+          {
+            type: 'text',
+            text: ` : ${param.type}`
           }
         ]
       }
@@ -248,6 +252,7 @@ export class Slack {
               }
             ]
           },
+
           {
             type: 'rich_text_section',
             elements: [
