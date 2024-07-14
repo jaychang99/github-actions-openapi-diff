@@ -42057,7 +42057,8 @@ exports.LOCALE_EN_US = {
     'required.required': 'Required',
     'required.optional': 'Optional',
     'button.goto-api-documentation': 'Go to API documentation',
-    repository: 'Repository'
+    repository: 'Repository',
+    'exception.missing-description': 'No description provided. Please add one'
 };
 
 
@@ -42085,7 +42086,8 @@ exports.LOCALE_KO_KR = {
     'required.required': '필수',
     'required.optional': '선택',
     'button.goto-api-documentation': 'API 문서 바로가기',
-    repository: '저장소'
+    repository: '저장소',
+    'exception.missing-description': '설명이 없습니다. 추가해주세요'
 };
 
 
@@ -42431,7 +42433,8 @@ class Slack {
                         elements: [
                             {
                                 type: 'text',
-                                text: param.description
+                                text: param.description ||
+                                    (0, translate_1.translate)('exception.missing-description')
                             }
                         ]
                     },
@@ -42482,6 +42485,10 @@ class Slack {
     async sendSingleApiDiff(diff) {
         try {
             const { thread_ts, changedParameters, changedRequestBody, changedResponseBody } = await this._sendEndpoint(diff);
+            console.log('thread_ts:', thread_ts);
+            console.log('changedParameters:', changedParameters);
+            console.log('changedRequestBody:', changedRequestBody);
+            console.log('changedResponseBody:', changedResponseBody);
             if (changedParameters.length > 0) {
                 await this._sendDetailItem('parameters', changedParameters, thread_ts);
             }
@@ -42676,8 +42683,8 @@ function validateInputAndSetConfig() {
     let baseFile;
     let headFile;
     if (isLocal) {
-        baseFile = JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-base-aws.json').toString());
-        headFile = JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-head-aws.json').toString());
+        baseFile = JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-base.json').toString());
+        headFile = JSON.parse(fs_1.default.readFileSync('./.local/examples/openapi-head.json').toString());
     }
     else {
         // github env

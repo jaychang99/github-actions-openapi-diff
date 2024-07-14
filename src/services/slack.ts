@@ -248,7 +248,9 @@ export class Slack {
             elements: [
               {
                 type: 'text',
-                text: param.description
+                text:
+                  param.description ||
+                  translate('exception.missing-description')
               }
             ]
           },
@@ -310,6 +312,11 @@ export class Slack {
         changedRequestBody,
         changedResponseBody
       } = await this._sendEndpoint(diff)
+
+      console.log('thread_ts:', thread_ts)
+      console.log('changedParameters:', changedParameters)
+      console.log('changedRequestBody:', changedRequestBody)
+      console.log('changedResponseBody:', changedResponseBody)
 
       if (changedParameters.length > 0) {
         await this._sendDetailItem('parameters', changedParameters, thread_ts)

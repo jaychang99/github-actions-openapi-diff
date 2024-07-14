@@ -20,5 +20,7 @@ export const LOCALE_KO_KR: Locale = {
 
   'button.goto-api-documentation': 'API 문서 바로가기',
 
-  repository: '저장소'
+  repository: '저장소',
+
+  'exception.missing-description': '설명이 없습니다. 추가해주세요'
 }
