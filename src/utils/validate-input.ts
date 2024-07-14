@@ -76,10 +76,10 @@ export function validateInputAndSetConfig(): Config {
   let headFile: object
   if (isLocal) {
     baseFile = JSON.parse(
-      fs.readFileSync('./.local/examples/openapi-base-aws.json').toString()
+      fs.readFileSync('./.local/examples/openapi-base.json').toString()
     )
     headFile = JSON.parse(
-      fs.readFileSync('./.local/examples/openapi-head-aws.json').toString()
+      fs.readFileSync('./.local/examples/openapi-head.json').toString()
     )
   } else {
     // github env
