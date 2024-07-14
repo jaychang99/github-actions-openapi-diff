@@ -42560,9 +42560,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getFileFromBranch = void 0;
 const child_process_1 = __nccwpck_require__(2081);
 const fs_1 = __nccwpck_require__(7147);
-function getFileFromBranch(branch, filePath) {
+function getFileFromBranch(branch, filePath, offsetFromHead) {
+    const offset = offsetFromHead ? `~${offsetFromHead}` : '';
     (0, child_process_1.execSync)(`git fetch origin ${branch}`);
-    (0, child_process_1.execSync)(`git checkout FETCH_HEAD -- ${filePath}`);
+    (0, child_process_1.execSync)(`git checkout FETCH_HEAD${offset} -- ${filePath}`);
     return (0, fs_1.readFileSync)(filePath);
 }
 exports.getFileFromBranch = getFileFromBranch;
@@ -42693,15 +42694,21 @@ function validateInputAndSetConfig() {
         const baseCommittish = isOnPullRequest
             ? // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
                 process.env.GITHUB_BASE_REF
-            : `${headCommittish}~1`;
-        const openapiFilePath = core.getInput('openapi_file_path') ?? DEFAULT_OPENAPI_FILE_PATH;
-        baseFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(baseCommittish, openapiFilePath).toString());
+            : headCommittish;
+        // core.getInput() always returns a string, so nullish coalescing operator does not work.
+        const openapiFilePath = core.getInput('openapi_file_path') === ''
+            ? DEFAULT_OPENAPI_FILE_PATH
+            : core.getInput('openapi_file_path');
+        baseFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(baseCommittish, openapiFilePath, isOnPullRequest ? undefined : 1).toString());
         headFile = JSON.parse((0, get_file_from_branch_1.getFileFromBranch)(headCommittish, openapiFilePath).toString());
     }
+    const sha = core.getInput('head_commit_sha') === ''
+        ? MOCKUP_SHA
+        : core.getInput('head_commit_sha');
     const githubConfig = {
         repository: process.env.GITHUB_REPOSITORY ?? MOCKUP_REPOSITORY,
         headCommitInfo: {
-            sha: process.env.GITHUB_SHA ?? MOCKUP_SHA,
+            sha,
             message: core.getInput('head_commit_message') === ''
                 ? MOCKUP_MESSAGE
                 : core.getInput('head_commit_message')
