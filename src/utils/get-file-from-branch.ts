@@ -9,6 +9,7 @@ export function getFileFromBranch(
   const offset = offsetFromHead ? `~${offsetFromHead}` : ''
 
   execSync(`git fetch origin ${branch}`)
-  execSync(`git checkout FETCH_HEAD${offset} -- ${filePath}`)
+  execSync(`git checkout ${branch} -- ${filePath}`)
+  execSync(`git checkout HEAD${offset} -- ${filePath}`)
   return readFileSync(filePath)
 }
