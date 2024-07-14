@@ -16,5 +16,7 @@ export const LOCALE_KO_KR: Locale = {
   'status.unchanged': '변경되지 않음',
 
   'required.required': '필수',
-  'required.optional': '선택'
+  'required.optional': '선택',
+
+  'button.goto-api-documentation': 'API 문서 바로가기'
 }

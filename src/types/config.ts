@@ -4,6 +4,7 @@ export interface Config {
   initialDelayInMilliseconds: number
   slackConfig: SlackDisabledOptions | SlackEnabledOptions
   githubConfig: GithubOptions
+  apiDocumentationUrl?: string
 }
 
 interface SlackDisabledOptions {

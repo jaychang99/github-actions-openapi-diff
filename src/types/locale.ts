@@ -15,4 +15,6 @@ export interface Locale {
 
   'required.required': string
   'required.optional': string
+
+  'button.goto-api-documentation': string
 }

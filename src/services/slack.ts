@@ -1,6 +1,7 @@
 import { DiffOutputItem } from 'openapi-diff-node'
 import {
   RichTextBlock,
+  RichTextElement,
   RichTextList,
   RichTextQuote,
   RichTextSection,
@@ -61,7 +62,8 @@ export class Slack {
     private token: string,
     private channelId: string,
     private memberIdListToMention: string[],
-    private githubConfig: Config['githubConfig']
+    private githubConfig: Config['githubConfig'],
+    private apiDocumentationUrl?: string
   ) {
     this.client = new WebClient(token)
   }
@@ -85,6 +87,37 @@ export class Slack {
       STATUS_TO_LOCALE_KEY[diff.status].localeKey
     )} `
     const color = STATUS_TO_LOCALE_KEY[diff.status].color
+
+    const additionalInfoList: RichTextElement[] = [
+      {
+        type: 'text',
+        text: this.githubConfig.headCommitInfo.sha.slice(0, 7),
+        style: {
+          code: true
+        }
+      },
+      {
+        type: 'text',
+        text: ` - `
+      },
+      {
+        type: 'link',
+        url: `https://github.com/${this.githubConfig.repository}/commit/${this.githubConfig.headCommitInfo.sha}`,
+        text: this.githubConfig.headCommitInfo.message
+      }
+    ]
+
+    if (this.apiDocumentationUrl) {
+      additionalInfoList.push({
+        type: 'text',
+        text: `   |   `
+      })
+      additionalInfoList.push({
+        type: 'link',
+        url: this.apiDocumentationUrl,
+        text: `${translate('button.goto-api-documentation')}`
+      })
+    }
 
     const res = await this.client.chat.postMessage({
       channel: this.channelId,
@@ -145,24 +178,7 @@ export class Slack {
               elements: [
                 {
                   type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text: this.githubConfig.headCommitInfo.sha.slice(0, 7),
-                      style: {
-                        code: true
-                      }
-                    },
-                    {
-                      type: 'text',
-                      text: ` - `
-                    },
-                    {
-                      type: 'link',
-                      url: `https://github.com/${this.githubConfig.repository}/commit/${this.githubConfig.headCommitInfo.sha}`,
-                      text: this.githubConfig.headCommitInfo.message
-                    }
-                  ]
+                  elements: additionalInfoList
                 }
               ]
             }

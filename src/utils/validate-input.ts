@@ -53,6 +53,10 @@ export function validateInputAndSetConfig(): Config {
     ? process.env.MEMBER_ID_LIST_TO_MENTION
     : core.getInput('member_id_list_to_mention')
 
+  const apiDocumentationUrl = isLocal
+    ? process.env.API_DOCUMENTATION_URL
+    : core.getInput('api_documentation_url')
+
   if (memberIdListToMention !== undefined && memberIdListToMention !== '') {
     // check if memberIdListToMention is a string of comma separated strings
     const memberIdListToMentionArray = memberIdListToMention.split(',')
@@ -121,6 +125,8 @@ export function validateInputAndSetConfig(): Config {
     headFile
   }
 
+  let slackConfig: Config['slackConfig']
+
   if (isSlackEnabled === 'true') {
     if (
       slackAccessToken !== '' &&
@@ -128,32 +134,29 @@ export function validateInputAndSetConfig(): Config {
       slackChannelId !== '' &&
       slackChannelId !== undefined
     ) {
-      return {
-        env,
-        locale,
-        initialDelayInMilliseconds: 500,
-        slackConfig: {
-          enabled: true,
-          token: slackAccessToken,
-          channelId: slackChannelId,
-          memberIdListToMention: memberIdListToMention?.split(',') ?? []
-        },
-        githubConfig
+      slackConfig = {
+        enabled: true,
+        token: slackAccessToken,
+        channelId: slackChannelId,
+        memberIdListToMention: memberIdListToMention?.split(',') ?? []
       }
+    } else {
+      throw new Error(
+        'slack_enabled is set to true, but slack_access_token and slack_channel_id are not set'
+      )
     }
-
-    throw new Error(
-      'slack_enabled is set to true, but slack_access_token and slack_channel_id are not set'
-    )
   } else {
-    return {
-      env,
-      locale,
-      initialDelayInMilliseconds: 500,
-      slackConfig: {
-        enabled: false
-      },
-      githubConfig
+    slackConfig = {
+      enabled: false
     }
+  }
+
+  return {
+    env,
+    locale,
+    initialDelayInMilliseconds: 500,
+    slackConfig,
+    githubConfig,
+    apiDocumentationUrl
   }
 }

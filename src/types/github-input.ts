@@ -38,4 +38,9 @@ export interface GithubInput {
    * The last commit message which triggered the action
    */
   headCommitMessage?: string
+
+  /**
+   * URL of the api documentation - Optional
+   */
+  apiDocumentationUrl?: string
 }
