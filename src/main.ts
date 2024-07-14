@@ -1,72 +1,79 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
-import { getFileFromBranch } from './utils/get-file-from-branch'
 import fs from 'fs'
 import * as http from 'http'
-import { generateMarkdownDiff } from './utils/generate-markdown-diff'
 import markdownit from 'markdown-it'
-import { resolveRefs } from './utils/resolve-refs'
+import { openapiDiff } from 'openapi-diff-node'
+import { formatDiffFromExternalLibrary } from '@/utils/format-diff-from-external-library'
+import { Slack } from '@/services/slack'
+import { validateInputAndSetConfig } from '@/utils/validate-input'
+import { Config } from '@/types/config'
 
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
+
+// eslint-disable-next-line import/no-mutable-exports
+export let locale: Config['locale'] = 'en-us'
+
 export async function run(): Promise<void> {
   try {
-    const isLocal = process.env.OPENAPI_DIFF_NODE_ENV === 'local'
-    const localEnvName = isLocal ? 'LOCAL' : 'GITHUB'
+    const config = validateInputAndSetConfig()
 
-    console.log('----starting in', localEnvName, 'environment----')
+    locale = config.locale
 
-    const ms: string = isLocal ? '500' : core.getInput('milliseconds')
+    console.log(`starting in ${config.env} environment`)
 
-    // TODO: delete the following after modifiying test codes.
+    const isLocal = config.env === 'local'
+
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    core.debug(`Waiting ${config.initialDelayInMilliseconds} milliseconds ...`)
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    await wait(config.initialDelayInMilliseconds)
 
-    core.setOutput('time', new Date().toTimeString())
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseFile = config.githubConfig.baseFile as any // TODO: get type from openapi-diff-node 1.0.2
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const headFile = config.githubConfig.headFile as any // TODO: get type from openapi-diff-node 1.0.2
 
-    // parse two openapi files
-    const baseBranch = process.env.GITHUB_BASE_REF!
-    const headBranch = process.env.GITHUB_HEAD_REF!
-    const filePath = 'openapi.json'
+    const diffFromExternalLibrary = openapiDiff(baseFile, headFile)
 
-    const baseFile = isLocal
-      ? JSON.parse(
-          fs.readFileSync('./.local/examples/openapi-base.json').toString() // testing file in local env
-        )
-      : JSON.parse(getFileFromBranch(baseBranch, filePath).toString())
-
-    const headFile = isLocal
-      ? JSON.parse(
-          fs.readFileSync('./.local/examples/openapi-head.json').toString() // testing file in local env
-        )
-      : JSON.parse(getFileFromBranch(headBranch, filePath).toString())
-
-    // resolve all refs. openapi.json has references to other properties, so we need to resolve them
-    const refResolvedBaseFile = resolveRefs(baseFile, baseFile)
-    const refResolvedHeadFile = resolveRefs(headFile, headFile)
-
-    const markdownDiff = generateMarkdownDiff(
-      refResolvedBaseFile,
-      refResolvedHeadFile
+    const formattedDiffFromExternalLibrary = formatDiffFromExternalLibrary(
+      diffFromExternalLibrary
     )
+
+    if (config.slackConfig.enabled) {
+      const slack = new Slack(
+        config.slackConfig.token,
+        config.slackConfig.channelId,
+        config.slackConfig.memberIdListToMention,
+        config.githubConfig,
+        config.apiDocumentationUrl
+      )
+      // eslint-disable-next-line github/array-foreach
+      diffFromExternalLibrary.forEach(diff => {
+        slack.sendSingleApiDiff(diff)
+      })
+    }
 
     if (!isLocal) {
       // Set outputs for other workflow steps to use
-      core.setOutput('result', markdownDiff)
+      core.setOutput('diff_result', formattedDiffFromExternalLibrary)
+      // for backward compatibility, warn users to use `diff_result` instead of `result`
+      console.warn(
+        `
+[DEPRECATED] The output 'result' is deprecated and will be removed in a future release. Please use 'diff_result' instead.
+`
+      )
+      core.setOutput('result', formattedDiffFromExternalLibrary)
     }
 
     if (isLocal) {
       // Define the port number
       const PORT = 5050
       const md = markdownit()
-      const mdRenderedResult = md.render(markdownDiff)
+      const mdRenderedResult = md.render(formattedDiffFromExternalLibrary)
       // Create a server
       const server: http.Server = http.createServer((req, res) => {
         // Set the response header
