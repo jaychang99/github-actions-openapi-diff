@@ -57,6 +57,8 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Show Commit Info (Pull Request)
         if: github.event_name == 'pull_request'
