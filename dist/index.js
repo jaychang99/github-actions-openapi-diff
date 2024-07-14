@@ -42563,7 +42563,8 @@ const fs_1 = __nccwpck_require__(7147);
 function getFileFromBranch(branch, filePath, offsetFromHead) {
     const offset = offsetFromHead ? `~${offsetFromHead}` : '';
     (0, child_process_1.execSync)(`git fetch origin ${branch}`);
-    (0, child_process_1.execSync)(`git checkout FETCH_HEAD${offset} -- ${filePath}`);
+    (0, child_process_1.execSync)(`git checkout ${branch} -- ${filePath}`);
+    (0, child_process_1.execSync)(`git checkout HEAD${offset} -- ${filePath}`);
     return (0, fs_1.readFileSync)(filePath);
 }
 exports.getFileFromBranch = getFileFromBranch;
