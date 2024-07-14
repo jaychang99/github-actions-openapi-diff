@@ -152,6 +152,12 @@ export class Slack {
                 },
                 {
                   type: 'mrkdwn',
+                  text: `*${translate('repository')}: *\n<https://github.com/${
+                    this.githubConfig.repository
+                  }|${this.githubConfig.repository}>`
+                },
+                {
+                  type: 'mrkdwn',
                   text: `*${translate('changed.parameters')} ${translate(
                     'count'
                   )}:*\n ${changedParameters.length}`

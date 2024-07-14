@@ -18,5 +18,7 @@ export const LOCALE_EN_US: Locale = {
   'required.required': 'Required',
   'required.optional': 'Optional',
 
-  'button.goto-api-documentation': 'Go to API documentation'
+  'button.goto-api-documentation': 'Go to API documentation',
+
+  repository: 'Repository'
 }

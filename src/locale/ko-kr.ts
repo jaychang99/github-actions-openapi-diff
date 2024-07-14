@@ -18,5 +18,7 @@ export const LOCALE_KO_KR: Locale = {
   'required.required': '필수',
   'required.optional': '선택',
 
-  'button.goto-api-documentation': 'API 문서 바로가기'
+  'button.goto-api-documentation': 'API 문서 바로가기',
+
+  repository: '저장소'
 }
