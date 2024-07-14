@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
-import { getFileFromBranch } from './utils/get-file-from-branch'
 import fs from 'fs'
 import * as http from 'http'
 import markdownit from 'markdown-it'
@@ -33,22 +32,10 @@ export async function run(): Promise<void> {
 
     await wait(config.initialDelayInMilliseconds)
 
-    // parse two openapi files
-    const baseBranch = process.env.GITHUB_BASE_REF!
-    const headBranch = process.env.GITHUB_HEAD_REF!
-    const filePath = 'openapi.json'
-
-    const baseFile = isLocal
-      ? JSON.parse(
-          fs.readFileSync('./.local/examples/openapi-base.json').toString() // testing file in local env
-        )
-      : JSON.parse(getFileFromBranch(baseBranch, filePath).toString())
-
-    const headFile = isLocal
-      ? JSON.parse(
-          fs.readFileSync('./.local/examples/openapi-head.json').toString() // testing file in local env
-        )
-      : JSON.parse(getFileFromBranch(headBranch, filePath).toString())
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseFile = config.githubConfig.baseFile as any // TODO: get type from openapi-diff-node 1.0.2
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const headFile = config.githubConfig.headFile as any // TODO: get type from openapi-diff-node 1.0.2
 
     const diffFromExternalLibrary = openapiDiff(baseFile, headFile)
 

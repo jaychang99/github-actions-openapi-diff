@@ -3,6 +3,7 @@ export interface Config {
   env: 'local' | 'github'
   initialDelayInMilliseconds: number
   slackConfig: SlackDisabledOptions | SlackEnabledOptions
+  githubConfig: GithubOptions
 }
 
 interface SlackDisabledOptions {
@@ -14,4 +15,10 @@ interface SlackEnabledOptions {
   token: string
   channelId: string
   memberIdListToMention: string[]
+}
+
+interface GithubOptions {
+  repository: string // /{owner}/{repo}
+  baseFile: object
+  headFile: object
 }

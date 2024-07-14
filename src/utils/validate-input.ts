@@ -1,5 +1,9 @@
+import fs from 'fs'
 import { Config } from '@/types/config'
 import * as core from '@actions/core'
+import { getFileFromBranch } from '@/utils/get-file-from-branch'
+
+const DEFAULT_OPENAPI_FILE_PATH = 'openapi.json'
 
 export function validateInputAndSetConfig(): Config {
   core.debug('Validating input...')
@@ -60,6 +64,53 @@ export function validateInputAndSetConfig(): Config {
     }
   }
 
+  // get openapi files
+  let baseFile: object
+  let headFile: object
+  if (isLocal) {
+    baseFile = JSON.parse(
+      fs.readFileSync('./.local/examples/openapi-base.json').toString()
+    )
+    headFile = JSON.parse(
+      fs.readFileSync('./.local/examples/openapi-head.json').toString()
+    )
+  } else {
+    // github env
+
+    const isOnPullRequest = process.env.GITHUB_EVENT_NAME === 'pull_request'
+
+    // for on:push,  head of the branch which triggered this action // ex: refs/heads/branch-name
+    // for on:pull_request, head of the PR, commonly feature branchs.
+    const headCommittish = isOnPullRequest
+      ? // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+        process.env.GITHUB_HEAD_REF!
+      : // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+        process.env.GITHUB_REF!
+
+    // for on:pull_request, base branch of the PR, commonly master/main/develop branch
+    // for on:push go one commit back to get the base branch on the target branch
+    const baseCommittish = isOnPullRequest
+      ? // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+        process.env.GITHUB_BASE_REF!
+      : `${headCommittish}~1`
+
+    const openapiFilePath =
+      core.getInput('openapi_file_path') ?? DEFAULT_OPENAPI_FILE_PATH
+
+    baseFile = JSON.parse(
+      getFileFromBranch(baseCommittish, openapiFilePath).toString()
+    )
+    headFile = JSON.parse(
+      getFileFromBranch(headCommittish, openapiFilePath).toString()
+    )
+  }
+
+  const githubConfig: Config['githubConfig'] = {
+    repository: process.env.GITHUB_REPOSITORY ?? '',
+    baseFile,
+    headFile
+  }
+
   if (isSlackEnabled === 'true') {
     if (
       slackAccessToken !== '' &&
@@ -76,7 +127,8 @@ export function validateInputAndSetConfig(): Config {
           token: slackAccessToken,
           channelId: slackChannelId,
           memberIdListToMention: memberIdListToMention?.split(',') ?? []
-        }
+        },
+        githubConfig
       }
     }
 
@@ -90,7 +142,8 @@ export function validateInputAndSetConfig(): Config {
       initialDelayInMilliseconds: 500,
       slackConfig: {
         enabled: false
-      }
+      },
+      githubConfig
     }
   }
 }

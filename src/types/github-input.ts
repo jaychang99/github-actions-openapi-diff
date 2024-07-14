@@ -28,4 +28,9 @@ export interface GithubInput {
    * If mentioning specific slack members, provide their ids
    */
   memberIdListToMention?: string
+
+  /**
+   * openapi file path
+   */
+  openapiFilePath?: string
 }
