@@ -22,5 +22,9 @@ export const LOCALE_EN_US: Locale = {
 
   repository: 'Repository',
 
-  'exception.missing-description': 'No description provided. Please add one'
+  'exception.missing-description': 'No description provided. Please add one',
+
+  description: 'description',
+  required: 'required',
+  example: 'example'
 }

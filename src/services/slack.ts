@@ -246,34 +246,75 @@ export class Slack {
         required = param.required
       }
 
+      const descriptionElements: RichTextList['elements'] = []
+
+      if (param.description) {
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: `${translate('description')}: ${param.description}`
+            }
+          ]
+        })
+      }
+
+      if (required !== 'N/A') {
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: `${translate('required')}: ${required}`
+            }
+          ]
+        })
+      }
+
+      if (param.example !== 'N/A') {
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: `${translate('example')}: ${param.example}`
+            }
+          ]
+        })
+      }
+
+      if (param.enum.length > 0) {
+        const enumElementList: RichTextElement[] = []
+
+        for (const e of param.enum) {
+          const isFirstIteration = enumElementList.length === 0
+
+          enumElementList.push({
+            type: 'text',
+            text: isFirstIteration ? 'ENUM: ' : ', '
+          })
+          enumElementList.push({
+            type: 'text',
+            text: e,
+            style: {
+              code: true
+            }
+          })
+        }
+
+        descriptionElements.push({
+          type: 'rich_text_section',
+          elements: enumElementList
+        })
+      }
+
       const description: RichTextList = {
         type: 'rich_text_list',
         style: 'bullet',
         indent: 0,
         border: 1,
-        elements: [
-          {
-            type: 'rich_text_section',
-            elements: [
-              {
-                type: 'text',
-                text:
-                  param.description ||
-                  translate('exception.missing-description')
-              }
-            ]
-          },
-
-          {
-            type: 'rich_text_section',
-            elements: [
-              {
-                type: 'text',
-                text: `필수여부: ${required}`
-              }
-            ]
-          }
-        ]
+        elements: descriptionElements
       }
 
       const newline: RichTextSection = {

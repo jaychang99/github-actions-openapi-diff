@@ -22,5 +22,9 @@ export const LOCALE_KO_KR: Locale = {
 
   repository: '저장소',
 
-  'exception.missing-description': '설명이 없습니다. 추가해주세요'
+  'exception.missing-description': '설명이 없습니다. 추가해주세요',
+
+  description: '설명',
+  required: '필수여부',
+  example: '예시'
 }

@@ -21,4 +21,8 @@ export interface Locale {
   repository: string
 
   'exception.missing-description': string
+
+  description: string
+  required: string
+  example: string
 }
