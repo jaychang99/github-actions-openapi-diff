@@ -10,9 +10,37 @@ branding:
 # Define your inputs here.
 inputs:
   milliseconds:
-    description: 'Your input description here'
+    description: 'The number of milliseconds to wait before the action starts. '
     required: true
     default: '1000'
+  slack_enabled:
+    description: 'Enable Slack notifications'
+    required: false
+    default: 'false'
+  slack_channel_id:
+    description: 'The Slack channel ID to send notifications to'
+  slack_access_token:
+    description:
+      'The Slack access token that has the necessary permissions to send
+      messages to the channel'
+  locale:
+    description: 'The locale to use for the action'
+    required: false
+    default: 'en-us'
+  member_id_list_to_mention:
+    description:
+      'A list of member IDs to mention in the Slack message, comma separated'
+  api_documentation_url:
+    description: 'The URL to the API documentation'
+    required: false
+  openapi_file_path:
+    description: 'The path to the OpenAPI file'
+    required: false
+    default: 'openapi.json'
+  head_commit_message:
+    description: 'The message of the head commit'
+  head_commit_sha:
+    description: 'The SHA of the head commit'
 
 # Define your outputs here.
 outputs:
