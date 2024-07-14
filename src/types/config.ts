@@ -21,4 +21,8 @@ interface GithubOptions {
   repository: string // /{owner}/{repo}
   baseFile: object
   headFile: object
+  headCommitInfo: {
+    sha: string
+    message: string
+  }
 }

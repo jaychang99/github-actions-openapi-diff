@@ -4,6 +4,9 @@ import * as core from '@actions/core'
 import { getFileFromBranch } from '@/utils/get-file-from-branch'
 
 const DEFAULT_OPENAPI_FILE_PATH = 'openapi.json'
+const MOCKUP_REPOSITORY = '/mockup_owner/mockup_repo'
+const MOCKUP_SHA = 'mockup123_sha'
+const MOCKUP_MESSAGE = 'mockup message for testing'
 
 export function validateInputAndSetConfig(): Config {
   core.debug('Validating input...')
@@ -106,7 +109,14 @@ export function validateInputAndSetConfig(): Config {
   }
 
   const githubConfig: Config['githubConfig'] = {
-    repository: process.env.GITHUB_REPOSITORY ?? '',
+    repository: process.env.GITHUB_REPOSITORY ?? MOCKUP_REPOSITORY,
+    headCommitInfo: {
+      sha: process.env.GITHUB_SHA ?? MOCKUP_SHA,
+      message:
+        core.getInput('head_commit_message') === ''
+          ? MOCKUP_MESSAGE
+          : core.getInput('head_commit_message')
+    },
     baseFile,
     headFile
   }

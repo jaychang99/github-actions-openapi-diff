@@ -33,4 +33,9 @@ export interface GithubInput {
    * openapi file path
    */
   openapiFilePath?: string
+
+  /**
+   * The last commit message which triggered the action
+   */
+  headCommitMessage?: string
 }

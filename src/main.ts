@@ -47,7 +47,8 @@ export async function run(): Promise<void> {
       const slack = new Slack(
         config.slackConfig.token,
         config.slackConfig.channelId,
-        config.slackConfig.memberIdListToMention
+        config.slackConfig.memberIdListToMention,
+        config.githubConfig
       )
       // eslint-disable-next-line github/array-foreach
       diffFromExternalLibrary.forEach(diff => {

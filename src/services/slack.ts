@@ -8,6 +8,7 @@ import {
 } from '@slack/web-api'
 import { translate } from '@/locale/translate'
 import { Locale } from '@/types/locale'
+import { Config } from '@/types/config'
 
 type DetailItem =
   | DiffOutputItem['queryParams']
@@ -59,7 +60,8 @@ export class Slack {
   constructor(
     private token: string,
     private channelId: string,
-    private memberIdListToMention: string[]
+    private memberIdListToMention: string[],
+    private githubConfig: Config['githubConfig']
   ) {
     this.client = new WebClient(token)
   }
@@ -139,11 +141,28 @@ export class Slack {
               type: 'divider'
             },
             {
-              type: 'section',
-              fields: [
+              type: 'rich_text',
+              elements: [
                 {
-                  type: 'plain_text',
-                  text: translate('see_thread_for_details')
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: this.githubConfig.headCommitInfo.sha.slice(0, 7),
+                      style: {
+                        code: true
+                      }
+                    },
+                    {
+                      type: 'text',
+                      text: ` - `
+                    },
+                    {
+                      type: 'link',
+                      url: `https://github.com/${this.githubConfig.repository}/commit/${this.githubConfig.headCommitInfo.sha}`,
+                      text: this.githubConfig.headCommitInfo.message
+                    }
+                  ]
                 }
               ]
             }
