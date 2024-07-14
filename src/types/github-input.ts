@@ -40,6 +40,11 @@ export interface GithubInput {
   headCommitMessage?: string
 
   /**
+   * The sha of the last commit which triggered the action
+   */
+  headCommitSha?: string
+
+  /**
    * URL of the api documentation - Optional
    */
   apiDocumentationUrl?: string

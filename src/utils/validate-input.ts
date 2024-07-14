@@ -119,10 +119,15 @@ export function validateInputAndSetConfig(): Config {
     )
   }
 
+  const sha =
+    core.getInput('head_commit_sha') === ''
+      ? MOCKUP_SHA
+      : core.getInput('head_commit_sha')
+
   const githubConfig: Config['githubConfig'] = {
     repository: process.env.GITHUB_REPOSITORY ?? MOCKUP_REPOSITORY,
     headCommitInfo: {
-      sha: process.env.GITHUB_SHA ?? MOCKUP_SHA,
+      sha,
       message:
         core.getInput('head_commit_message') === ''
           ? MOCKUP_MESSAGE
