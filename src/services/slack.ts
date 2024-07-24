@@ -320,11 +320,22 @@ export class Slack {
         for (const changeLog of param.changeLogs) {
           const { field, oldValue, newValue } = changeLog
 
+          let oldValueText = oldValue
+          let newValueText = newValue
+
+          if (Array.isArray(oldValue)) {
+            oldValueText = oldValue.join(', ')
+          }
+
+          if (Array.isArray(newValue)) {
+            newValueText = newValue.join(', ')
+          }
+
           changeLogElementList.push({
             type: 'text',
             text: `${field} ${translate(
               'status.modified'
-            )}: ${oldValue} -> ${newValue}`
+            )}: ${oldValueText} -> ${newValueText}`
           })
         }
 
