@@ -78,6 +78,7 @@ export class Slack {
     diff: DiffOutputItem
   ): Promise<SendEndpointReturnType> {
     const endpoint = `${diff.method.toUpperCase()}: ${diff.path}`
+    const description = diff.description
 
     const changedParameters = this._getUnchangedItems(diff.queryParams)
     const changedRequestBody = this._getUnchangedItems(diff.requestBody)
@@ -149,6 +150,10 @@ export class Slack {
                 {
                   type: 'mrkdwn',
                   text: `*${translate('endpoint.singular')}:*\n ${endpoint}`
+                },
+                {
+                  type: 'mrkdwn',
+                  text: `*${translate('description')}:*\n ${description}`
                 },
                 {
                   type: 'mrkdwn',
