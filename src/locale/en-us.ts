@@ -26,5 +26,9 @@ export const LOCALE_EN_US: Locale = {
 
   description: 'description',
   required: 'required',
-  example: 'example'
+  example: 'example',
+
+  'changed.before': 'Before',
+  'changed.after': 'After',
+  'properties.changed': 'Properties changed'
 }

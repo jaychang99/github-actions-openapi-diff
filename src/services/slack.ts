@@ -314,11 +314,47 @@ export class Slack {
         })
       }
 
+      const changeLogElementList: RichTextList[] = []
+
       if (param.changeLogs.length > 0) {
-        const changeLogElementList: RichTextElement[] = []
+        changeLogElementList.push({
+          type: 'rich_text_list',
+          style: 'bullet',
+          indent: 0,
+          border: 1,
+          elements: [
+            {
+              type: 'rich_text_section',
+              elements: [
+                {
+                  type: 'text',
+                  text: translate('properties.changed')
+                }
+              ]
+            }
+          ]
+        })
 
         for (const changeLog of param.changeLogs) {
           const { field, oldValue, newValue } = changeLog
+
+          changeLogElementList.push({
+            type: 'rich_text_list',
+            style: 'bullet',
+            indent: 1,
+            border: 1,
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: field
+                  }
+                ]
+              }
+            ]
+          })
 
           let oldValueText = oldValue
           let newValueText = newValue
@@ -332,17 +368,32 @@ export class Slack {
           }
 
           changeLogElementList.push({
-            type: 'text',
-            text: `${field} ${translate(
-              'status.modified'
-            )}: ${oldValueText} -> ${newValueText}`
+            type: 'rich_text_list',
+            style: 'bullet',
+            indent: 2,
+            border: 1,
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: `${translate('changed.before')}: \n${oldValueText}`
+                  }
+                ]
+              },
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: `${translate('changed.after')}: \n${newValueText}`
+                  }
+                ]
+              }
+            ]
           })
         }
-
-        descriptionElements.push({
-          type: 'rich_text_section',
-          elements: changeLogElementList
-        })
       }
 
       const description: RichTextList = {
@@ -365,6 +416,11 @@ export class Slack {
 
       elements.push(statusAndEndpoint)
       elements.push(description)
+
+      if (changeLogElementList.length > 0) {
+        elements.push(...changeLogElementList)
+      }
+
       elements.push(newline)
     }
 
