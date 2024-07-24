@@ -26,5 +26,11 @@ export const LOCALE_KO_KR: Locale = {
 
   description: '설명',
   required: '필수여부',
-  example: '예시'
+  example: '예시',
+
+  'changed.before': '변경 전',
+  'changed.after': '변경 후',
+  'properties.changed': '변경된 속성',
+
+  'empty.array': '없음'
 }

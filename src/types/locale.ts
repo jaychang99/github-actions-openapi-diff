@@ -25,4 +25,10 @@ export interface Locale {
   description: string
   required: string
   example: string
+
+  'changed.before': string
+  'changed.after': string
+  'properties.changed': string
+
+  'empty.array': string
 }
