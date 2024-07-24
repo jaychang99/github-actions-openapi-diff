@@ -30,5 +30,7 @@ export const LOCALE_KO_KR: Locale = {
 
   'changed.before': '변경 전',
   'changed.after': '변경 후',
-  'properties.changed': '변경된 속성'
+  'properties.changed': '변경된 속성',
+
+  'empty.array': '없음'
 }

@@ -30,5 +30,7 @@ export const LOCALE_EN_US: Locale = {
 
   'changed.before': 'Before',
   'changed.after': 'After',
-  'properties.changed': 'Properties changed'
+  'properties.changed': 'Properties changed',
+
+  'empty.array': 'Not specified'
 }

@@ -360,11 +360,19 @@ export class Slack {
           let newValueText = newValue
 
           if (Array.isArray(oldValue)) {
-            oldValueText = oldValue.join(', ')
+            if (oldValue.length > 0) {
+              oldValueText = oldValue.join(', ')
+            } else {
+              oldValueText = `(${translate('empty.array')})`
+            }
           }
 
           if (Array.isArray(newValue)) {
-            newValueText = newValue.join(', ')
+            if (newValue.length > 0) {
+              newValueText = newValue.join(', ')
+            } else {
+              newValueText = `(${translate('empty.array')})`
+            }
           }
 
           changeLogElementList.push({

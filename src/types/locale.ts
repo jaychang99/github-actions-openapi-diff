@@ -29,4 +29,6 @@ export interface Locale {
   'changed.before': string
   'changed.after': string
   'properties.changed': string
+
+  'empty.array': string
 }
