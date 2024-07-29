@@ -16777,7 +16777,7 @@ function flattenOpenapi(spec) {
   Object.entries(spec.paths).forEach(([path, pathItem]) => {
     if (!pathItem) return;
     Object.entries(pathItem).forEach(([method, methodItem]) => {
-      var _a, _b, _c, _d, _e, _f, _g;
+      var _a, _b, _c, _d, _e, _f, _g, _h;
       if (!isHttpMethod(method)) return;
       const assertedMethodItem = methodItem;
       const { requestBody, responses } = assertedMethodItem;
@@ -16790,7 +16790,8 @@ function flattenOpenapi(spec) {
       const pathFlattenedItem = {
         method,
         path,
-        description: (_g = assertedMethodItem.description) != null ? _g : "",
+        summary: (_g = assertedMethodItem.summary) != null ? _g : "",
+        description: (_h = assertedMethodItem.description) != null ? _h : "",
         flattenedQueryParams,
         flattenedRequestBody,
         flattenedResponseBody
@@ -16945,6 +16946,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
       diffOutput.push({
         path: newItem.path,
         method: newItem.method,
+        description: newItem.description || newItem.summary,
+        // not diffing description for now
         queryParams: [
           ...newItem.flattenedQueryParams.map(
             (param) => __spreadProps(__spreadValues({}, param), {
@@ -16980,6 +16983,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
     diffOutput.push({
       path: newItem.path,
       method: newItem.method,
+      description: newItem.description || newItem.summary,
+      // not diffing description for now
       queryParams: diffFlattenedQueryParams(
         oldItem.flattenedQueryParams,
         newItem.flattenedQueryParams
@@ -17001,6 +17006,8 @@ function diffFlattenedOpenapi(flattenedOldSpec, flattenedNewSpec) {
       diffOutput.push({
         path: oldItem.path,
         method: oldItem.method,
+        description: oldItem.description || oldItem.summary,
+        // not diffing description
         queryParams: [
           ...oldItem.flattenedQueryParams.map(
             (param) => __spreadProps(__spreadValues({}, param), {
@@ -42110,7 +42117,11 @@ exports.LOCALE_EN_US = {
     'exception.missing-description': 'No description provided. Please add one',
     description: 'description',
     required: 'required',
-    example: 'example'
+    example: 'example',
+    'changed.before': 'Before',
+    'changed.after': 'After',
+    'properties.changed': 'Properties changed',
+    'empty.array': 'Not specified'
 };
 
 
@@ -42142,7 +42153,11 @@ exports.LOCALE_KO_KR = {
     'exception.missing-description': '설명이 없습니다. 추가해주세요',
     description: '설명',
     required: '필수여부',
-    example: '예시'
+    example: '예시',
+    'changed.before': '변경 전',
+    'changed.after': '변경 후',
+    'properties.changed': '변경된 속성',
+    'empty.array': '없음'
 };
 
 
@@ -42342,6 +42357,7 @@ class Slack {
     }
     async _sendEndpoint(diff) {
         const endpoint = `${diff.method.toUpperCase()}: ${diff.path}`;
+        const description = diff.description;
         const changedParameters = this._getUnchangedItems(diff.queryParams);
         const changedRequestBody = this._getUnchangedItems(diff.requestBody);
         const changedResponseBody = this._getUnchangedItems(diff.responseBody);
@@ -42406,6 +42422,10 @@ class Slack {
                                 {
                                     type: 'mrkdwn',
                                     text: `*${(0, translate_1.translate)('endpoint.singular')}:*\n ${endpoint}`
+                                },
+                                {
+                                    type: 'mrkdwn',
+                                    text: `*${(0, translate_1.translate)('description')}:*\n ${description}`
                                 },
                                 {
                                     type: 'mrkdwn',
@@ -42542,19 +42562,89 @@ class Slack {
                     elements: enumElementList
                 });
             }
+            const changeLogElementList = [];
             if (param.changeLogs.length > 0) {
-                const changeLogElementList = [];
+                changeLogElementList.push({
+                    type: 'rich_text_list',
+                    style: 'bullet',
+                    indent: 0,
+                    border: 1,
+                    elements: [
+                        {
+                            type: 'rich_text_section',
+                            elements: [
+                                {
+                                    type: 'text',
+                                    text: (0, translate_1.translate)('properties.changed')
+                                }
+                            ]
+                        }
+                    ]
+                });
                 for (const changeLog of param.changeLogs) {
                     const { field, oldValue, newValue } = changeLog;
                     changeLogElementList.push({
-                        type: 'text',
-                        text: `${field} ${(0, translate_1.translate)('status.modified')}: ${oldValue} -> ${newValue}`
+                        type: 'rich_text_list',
+                        style: 'bullet',
+                        indent: 1,
+                        border: 1,
+                        elements: [
+                            {
+                                type: 'rich_text_section',
+                                elements: [
+                                    {
+                                        type: 'text',
+                                        text: field
+                                    }
+                                ]
+                            }
+                        ]
+                    });
+                    let oldValueText = oldValue;
+                    let newValueText = newValue;
+                    if (Array.isArray(oldValue)) {
+                        if (oldValue.length > 0) {
+                            oldValueText = oldValue.join(', ');
+                        }
+                        else {
+                            oldValueText = `(${(0, translate_1.translate)('empty.array')})`;
+                        }
+                    }
+                    if (Array.isArray(newValue)) {
+                        if (newValue.length > 0) {
+                            newValueText = newValue.join(', ');
+                        }
+                        else {
+                            newValueText = `(${(0, translate_1.translate)('empty.array')})`;
+                        }
+                    }
+                    changeLogElementList.push({
+                        type: 'rich_text_list',
+                        style: 'bullet',
+                        indent: 2,
+                        border: 1,
+                        elements: [
+                            {
+                                type: 'rich_text_section',
+                                elements: [
+                                    {
+                                        type: 'text',
+                                        text: `${(0, translate_1.translate)('changed.before')}: \n${oldValueText}`
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'rich_text_section',
+                                elements: [
+                                    {
+                                        type: 'text',
+                                        text: `${(0, translate_1.translate)('changed.after')}: \n${newValueText}`
+                                    }
+                                ]
+                            }
+                        ]
                     });
                 }
-                descriptionElements.push({
-                    type: 'rich_text_section',
-                    elements: changeLogElementList
-                });
             }
             const description = {
                 type: 'rich_text_list',
@@ -42574,6 +42664,9 @@ class Slack {
             };
             elements.push(statusAndEndpoint);
             elements.push(description);
+            if (changeLogElementList.length > 0) {
+                elements.push(...changeLogElementList);
+            }
             elements.push(newline);
         }
         const mainText = (0, translate_1.translate)(TYPE_TO_LOCALE_KEY[type]);
