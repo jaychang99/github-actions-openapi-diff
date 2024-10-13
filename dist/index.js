@@ -16817,7 +16817,8 @@ function resolveReferences(schema, root) {
       for (const part of refPath) {
         refObject = refObject[part];
         if (!refObject) {
-          throw new Error(`Reference not found: ${schema.$ref}`);
+          console.warn(`[Warning] Reference not found: ${schema.$ref}`);
+          refObject = {};
         }
       }
       return resolveReferences(refObject, root);
